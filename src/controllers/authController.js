@@ -1,9 +1,13 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import { getUserRepository } from '../repositories/UserRepository.js';
 
 // Generar token JWT firmado con el id del usuario
 function signToken(id) {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+}
+
+function getUserId(user) {
+    return user.id ?? user._id;
 }
 
 // POST /api/auth/register
@@ -15,24 +19,26 @@ export async function register(req, res) {
             return res.status(400).json({ message: 'Todos los campos son obligatorios' });
         }
 
+        const userRepo = getUserRepository();
+
         // Existencia de email
-        const existing = await User.findOne({ email });
+        const existing = await userRepo.emailExists(email);
         if (existing) { 
             return res.status(400).json({ message: 'El email ya está registrado' });
         }
 
-        // Se crea el usuario. El hook pre('save') hashea la contraseña
-        const user = await User.create({ email, password });
+        // Se crea el usuario. El hook del modelo hashea la contraseña
+        const user = await userRepo.create({ email, password });
 
-        // Devolvemos el usuario y el token
-        const token = signToken(user._id);
+        const id = getUserId(user);
+        const token = signToken(id);
         
         res.cookie('token', token, {
             httpOnly: true, // Cookie no legible por JS en el navegador (anti XSS)
             sameSite: 'lax', // Protege de CSRF
             maxAge: 24 * 60 * 60 * 1000 // 1 día, como el token
         }).status(201).json({
-            user: { id: user._id, email: user.email }
+            user: { id: id, email: user.email }
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -48,8 +54,10 @@ export async function login(req, res) {
             return res.status(400).json({ message: 'Email y contraseña son obligatorios' });
         }
 
+        const userRepo = getUserRepository();
+
         // Obtenemos el usuario
-        const user = await User.findOne({ email }).select('+password');
+        const user = await userRepo.getByEmail(email);
         if (!user) {
             return res.status(401).json({ message: 'Credenciales inválidas' });
         }
@@ -60,14 +68,15 @@ export async function login(req, res) {
             return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
-        const token = signToken(user._id);
+        const id = getUserId(user);
+        const token = signToken(id);
 
         res.cookie('token', token, {
             httpOnly: true, // Cookie no legible por JS en el navegador (anti XSS)
             sameSite: 'lax', // Protege de CSRF
             maxAge: 24 * 60 * 60 * 1000 // 1 día, como el token
         }).json({
-            user: { id: user._id, email: user.email }
+            user: { id: id, email: user.email }
         });
     } catch (error) {
         return res.status(500).json({ message: error.message });

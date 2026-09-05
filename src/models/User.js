@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import { hashPassword, verifyPassword } from '../utils/password.js';
 
 const userSchema = new mongoose.Schema(
     {
@@ -34,13 +34,12 @@ userSchema.pre('save', async function () {
     if (!this.isModified('password'))
         return;
 
-    const salt = await bcrypt.genSalt(10); // El algoritmo hace 2^10 iteraciones de hashing (1024)
-    this.password = await bcrypt.hash(this.password, salt);
+    this.password = await hashPassword(this.password);
 });
 
 // Comparador de contraseñas al hacer login
 userSchema.methods.comparePassword = function (loginPassword) {
-    return bcrypt.compare(loginPassword, this.password);
+    return verifyPassword(loginPassword, this.password);
 };
 
 export default mongoose.model('User', userSchema, 'users');
