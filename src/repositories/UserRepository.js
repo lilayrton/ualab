@@ -33,6 +33,18 @@ class MongoUserRepository {
     count() {
         return User.countDocuments();
     }
+
+    // Se usa save() en vez de findByIdAndUpdate para que el hook pre('save') hashee la contraseña
+    async updatePassword(id, newPassword) {
+        const user = await User.findById(id);
+
+        if (!user) {
+            return null;
+        }
+
+        user.password = newPassword;
+        return user.save();
+    }
 }
 
 class SqlUserRepository {
@@ -70,6 +82,17 @@ class SqlUserRepository {
 
     count() {
         return UserSql.count();
+    }
+
+    // Se usa instance.update() para que el hook beforeUpdate hashee la contraseña
+    async updatePassword(id, newPassword) {
+        const user = await UserSql.findByPk(id);
+
+        if (!user) {
+            return null;
+        }
+
+        return user.update({ password: newPassword });
     }
 }
 
