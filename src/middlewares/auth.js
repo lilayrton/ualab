@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { getUserRepository } from '../repositories/UserRepository.js';
 
 export function protect(req, res, next) {
     // El token viene en la cookie httpOnly, no en el header
@@ -14,5 +15,21 @@ export function protect(req, res, next) {
         next();
     } catch (error) {
         return res.status(401).json({ message: 'Token inválido o expirado' });
+    }
+}
+
+// Exige que el usuario autenticado tenga rol de administrador
+// Se usa siempre después de `protect` (req.user.id ya existe)
+export async function requireAdmin(req, res, next) {
+    try {
+        const user = await getUserRepository().getById(req.user.id);
+
+        if (!user || user.role !== 'admin') {
+            return res.status(403).json({ message: 'Se requiere rol de administrador' });
+        }
+
+        next();
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
 }

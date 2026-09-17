@@ -29,6 +29,10 @@ class MongoUserRepository {
     async remove(id) {
         return User.findByIdAndDelete(id);
     }
+
+    count() {
+        return User.countDocuments();
+    }
 }
 
 class SqlUserRepository {
@@ -62,6 +66,10 @@ class SqlUserRepository {
         const deleted = await UserSql.destroy({ where: { id } });
         
         return deleted ? { id } : null;
+    }
+
+    count() {
+        return UserSql.count();
     }
 }
 

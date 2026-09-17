@@ -27,8 +27,12 @@ export async function register(req, res) {
             return res.status(400).json({ message: 'El email ya está registrado' });
         }
 
+        // El primer usuario registrado queda como administrador
+        const userCount = await userRepo.count();
+        const role = userCount === 0 ? 'admin' : 'user';
+
         // Se crea el usuario. El hook del modelo hashea la contraseña
-        const user = await userRepo.create({ email, password });
+        const user = await userRepo.create({ email, password, role });
 
         const id = getUserId(user);
         const token = signToken(id);
