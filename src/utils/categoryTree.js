@@ -1,4 +1,4 @@
-function toBase(category) {
+export function serializeCategory(category) {
     const raw = category.toJSON ? category.toJSON() : category;
 
     return {
@@ -44,7 +44,7 @@ function filterEnabled(nodes) {
 }
 
 export function buildTree(categories, { onlyEnabled = false } = {}) {
-    const nodes = categories.map(cat => toBase(cat));
+    const nodes = categories.map(cat => serializeCategory(cat));
     const nodeMap = new Map(nodes.map(n => [n.id, n]));
     const roots = [];
 

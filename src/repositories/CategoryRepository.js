@@ -1,15 +1,23 @@
 import { Op } from 'sequelize';
 import Category from '../models/Category.js';
 import CategorySql from '../modelsSql/Category.js';
-import { buildTree, isDescendant } from '../utils/categoryTree.js';
+import { buildTree, isDescendant, serializeCategory } from '../utils/categoryTree.js';
 
 class MongoCategoryRepository {
-    getAll() {
-        return Category.find().sort({ sortOrder: 1, name: 1});
+    async getAll() {
+        const categories = await Category.find().sort({ sortOrder: 1, name: 1});
+
+        return categories.map(serializeCategory);
     }
 
-    getById(id) {
-        return Category.findById(id);
+    async getById(id) {
+        const category = await Category.findById(id);
+
+        return category ? serializeCategory(category) : null;
+    }
+
+    getByIds(ids) {
+        return Category.find({ _id: { $in: ids } });
     }
 
     async getTree({ onlyEnabled = false } = {}) {
@@ -18,8 +26,16 @@ class MongoCategoryRepository {
         return buildTree(categories, { onlyEnabled });
     }
 
-    create(data) {
-        return Category.create(data);
+    async create(data) {
+        const category = await Category.create(data);
+
+        return serializeCategory(category);
+    }
+
+    async update(id, data) {
+        const category = await Category.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+
+        return category ? serializeCategory(category) : null;
     }
 
     async remove(id) {
@@ -49,12 +65,20 @@ class MongoCategoryRepository {
 }
 
 class SqlCategoryRepository {
-    getAll() {
-        return CategorySql.findAll({ order: [['sortOrder', 'ASC'], ['name', 'ASC']] });
+    async getAll() {
+        const categories = await CategorySql.findAll({ order: [['sortOrder', 'ASC'], ['name', 'ASC']] });
+
+        return categories.map(serializeCategory);
     }
 
-    getById(id) {
-        return CategorySql.findByPk(id);
+    async getById(id) {
+        const category = await CategorySql.findByPk(id);
+
+        return category ? serializeCategory(category) : null;
+    }
+
+    async getByIds(ids) {
+        return CategorySql.findAll({ where: { id: { [Op.in]: ids } } });
     }
 
     async getTree({ onlyEnabled = false } = {}) {
@@ -64,14 +88,22 @@ class SqlCategoryRepository {
         return buildTree(categories, { onlyEnabled });
     }
 
-    create(data) {
-        return CategorySql.create(data);
+    async create(data) {
+        const category = await CategorySql.create(data);
+
+        return serializeCategory(category);
     }
 
     async update(id, data) {
         const category = await CategorySql.findByPk(id);
 
-        return category ? category.update(data) : null;
+        if (!category) {
+            return null;
+        }
+
+        const updated = await category.update(data);
+
+        return serializeCategory(updated);
     }
 
     async remove(id) {
