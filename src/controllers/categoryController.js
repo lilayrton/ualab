@@ -100,10 +100,21 @@ export async function updateCategory(req, res) {
         const { name, description, slug, isEnabled, sortOrder, parentId } = req.body;
         const data = {};
 
-        if (name !== undefined) data.name = name.trim();
-        if (description !== undefined) data.description = description?.trim() ?? '';
-        if (isEnabled !== undefined) data.isEnabled = isEnabled;
-        if (sortOrder !== undefined) data.sortOrder = sortOrder;
+        if (name !== undefined) {
+            data.name = name.trim();
+        }
+
+        if (description !== undefined) {
+            data.description = description?.trim() ?? '';
+        }
+
+        if (isEnabled !== undefined) {
+            data.isEnabled = isEnabled;
+        }
+        
+        if (sortOrder !== undefined) {
+            data.sortOrder = sortOrder;
+        }
 
         if (slug !== undefined) {
             const finalSlug = slug?.trim() ? slug.trim() : slugify(name ?? existing.name);

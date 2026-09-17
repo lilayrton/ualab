@@ -15,7 +15,9 @@ function toBase(category) {
 }
 
 export function isDescendant(categories, categoryId, candidateId) {
-    if (String(categoryId) === String(candidateId)) return true;
+    if (String(categoryId) === String(candidateId)) {
+        return true;
+    }
 
     const children = categories.filter(c => c.parentId === String(categoryId));
 
@@ -26,7 +28,9 @@ function sortNodes(nodes) {
     nodes.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
 
     for (const node of nodes) {
-        if (node.children) sortNodes(node.children);
+        if (node.children) {
+            sortNodes(node.children);
+        }
     }
 }
 
@@ -45,13 +49,17 @@ export function buildTree(categories, { onlyEnabled = false } = {}) {
     const roots = [];
 
     for (const node of nodes) {
-        if (onlyEnabled && !node.isEnabled) continue;
+        if (onlyEnabled && !node.isEnabled) {
+            continue;
+        }
 
         const parentId = node.parentId;
         if (parentId && nodeMap.has(parentId)) {
             const parent = nodeMap.get(parentId);
 
-            if (!parent.children) parent.children = [];
+            if (!parent.children) {
+                parent.children = [];
+            }
 
             parent.children.push(node);
         } else {

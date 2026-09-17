@@ -33,7 +33,9 @@ class MongoCategoryRepository {
     slugExists(slug, excludeId = null) {
         const filter = { slug };
 
-        if (excludeId) filter._id = { $ne: excludeId };
+        if (excludeId) {
+            filter._id = { $ne: excludeId };
+        }
 
         return Category.exists(filter);
     }
@@ -85,7 +87,9 @@ class SqlCategoryRepository {
     async slugExists(slug, excludeId = null) {
         const where = { slug };
         
-        if (excludeId) where.id = { [Op.ne]: excludeId };
+        if (excludeId) {
+            where.id = { [Op.ne]: excludeId };
+        }
 
         return !!(await CategorySql.findOne({ where, attributes: ['id'] }));
     }

@@ -1,5 +1,7 @@
 export function slugify(text) {
-    if (!text) return '';
+    if (!text) {
+        return '';
+    }
 
     return String(text)
         .normalize('NFD')
