@@ -164,18 +164,14 @@ class MongoProductRepository {
         }
 
         if (variants !== undefined) {
-            await this.replaceVariants(product._id, variants);
+            await ProductVariant.deleteMany({ productId: product._id });
+
+            if (variants.length) {
+                await ProductVariant.insertMany(variants.map(v => ({ ...v, productId: product._id })));
+            }
         }
 
         return this.getById(product._id);
-    }
-
-    async replaceVariants(productId, variants) {
-        await ProductVariant.deleteMany({ productId });
-
-        if (variants.length) {
-            await ProductVariant.insertMany(variants.map(v => ({ ...v, productId })));
-        }
     }
 
     async remove(id) {
@@ -305,10 +301,6 @@ class SqlProductRepository {
         if (variants.length) {
             await ProductVariantSql.bulkCreate(variants.map(v => ({ ...v, productId })), { transaction });
         }
-    }
-
-    replaceVariants(productId, variants) {
-        return this._replaceVariantsSql(productId, variants, null);
     }
 
     async remove(id) {
