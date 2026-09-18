@@ -212,6 +212,11 @@ class MongoProductRepository {
 
         return ProductVariant.exists(filter);
     }
+
+    // Variante con ese SKU que pertenece a OTRO producto (para el cruce producto ↔ variante)
+    variantSkuExistsForOtherProduct(sku, productId) {
+        return ProductVariant.exists({ sku, productId: { $ne: productId } });
+    }
 }
 
 class SqlProductRepository {
@@ -350,6 +355,11 @@ class SqlProductRepository {
         }
 
         return !!(await ProductVariantSql.findOne({ where, attributes: ['id'] }));
+    }
+
+    // Variante SKU que pertenece a otro producto
+    async variantSkuExistsForOtherProduct(sku, productId) {
+        return !!(await ProductVariantSql.findOne({ where: { sku, productId: { [Op.ne]: productId } }, attributes: ['id'] }));
     }
 }
 

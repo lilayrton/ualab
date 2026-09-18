@@ -38,8 +38,9 @@ async function normalizeCategories(rawCategories, categoryRepo) {
     return { value: ids };
 }
 
-// Valida el arreglo de variantes; en updates permite los skus que ya pertenecen al producto
-async function normalizeVariants(rawVariants, productRepo, allowedSkuSet = []) {
+// Cuando se hace update hace que los skus que ya pertenecían al producto sigan asignados
+// Una variante sólo puede repetir el SKU de su propio producto, no de otro
+async function normalizeVariants(rawVariants, productRepo, { allowedSkuSet = [], productId = null } = {}) {
     if (rawVariants === undefined) {
         return { value: undefined };
     }
@@ -88,6 +89,10 @@ async function normalizeVariants(rawVariants, productRepo, allowedSkuSet = []) {
         }
 
         if (!allowedSkuSet.includes(finalSku) && await productRepo.variantSkuExists(finalSku)) {
+            return { error: `El SKU "${finalSku}" ya está en uso` };
+        }
+
+        if (await productRepo.skuExists(finalSku, productId)) {
             return { error: `El SKU "${finalSku}" ya está en uso` };
         }
 
@@ -158,7 +163,7 @@ export async function createProduct(req, res) {
 
     const finalSku = sku.trim().toUpperCase();
 
-    if (await productRepo.skuExists(finalSku)) {
+    if (await productRepo.skuExists(finalSku) || await productRepo.variantSkuExists(finalSku)) {
         return res.status(400).json({ message: `El SKU "${finalSku}" ya está en uso` });
     }
 
@@ -269,7 +274,7 @@ export async function updateProduct(req, res) {
 
         const finalSku = sku.trim().toUpperCase();
 
-        if (await productRepo.skuExists(finalSku, existing.id)) {
+        if (await productRepo.skuExists(finalSku, existing.id) || await productRepo.variantSkuExistsForOtherProduct(finalSku, existing.id)) {
             return res.status(400).json({ message: `El SKU "${finalSku}" ya está en uso` });
         }
 
@@ -346,7 +351,7 @@ export async function updateProduct(req, res) {
     const existingVariants = await productRepo.getVariants(existing.id);
     const allowedSkuSet = existingVariants.map(v => String(v.sku).toUpperCase());
 
-    const variantsResult = await normalizeVariants(variants, productRepo, allowedSkuSet);
+    const variantsResult = await normalizeVariants(variants, productRepo, { allowedSkuSet, productId: existing.id });
     if (variantsResult.error) {
         return res.status(400).json({ message: variantsResult.error });
     }

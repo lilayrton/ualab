@@ -14,7 +14,6 @@ export async function getProfile(req, res) {
 // POST /api/profile - se crea el perfil
 export async function createProfile(req, res) {
     const { firstName, lastName, phone, isCompany, dni, cuit, companyName } = req.body;
-
     const profileRepo = getProfileRepository();
 
     const exists = await profileRepo.getByUserId(req.user.id);
