@@ -139,6 +139,53 @@ class MongoProductRepository {
         return hydrated[0];
     }
 
+    async getByIds(ids) {
+        if (!ids.length) {
+            return [];
+        }
+
+        const products = await Product.find({ _id: { $in: ids } }).populate('categories').lean();
+        const byId = {};
+
+        products.forEach(p => {
+            byId[String(p._id)] = p;
+        });
+
+        const ordered = ids.map(id => byId[String(id)]).filter(Boolean);
+
+        return this._hydrate(ordered);
+    }
+
+    // Documentos mínimos para alimentar el índice de búsqueda en memoria
+    async getSearchDocuments() {
+        const products = await Product.find({}, 'name sku shortDescription longDescription').lean();
+
+        return products.map(p => ({
+            id: String(p._id),
+            name: p.name,
+            sku: p.sku,
+            shortDescription: p.shortDescription || '',
+            longDescription: p.longDescription || ''
+        }));
+    }
+
+    // Candidatos mínimos (con categorías) para filtros, facetas y orden en memoria
+    async findCandidates(ids = null) {
+        const filter = ids ? { _id: { $in: ids } } : {};
+        const products = await Product.find(filter, 'name sku price stock isEnabled createdAt').populate('categories').lean();
+
+        return products.map(p => ({
+            id: String(p._id),
+            name: p.name,
+            sku: p.sku,
+            price: Number(p.price),
+            stock: p.stock,
+            isEnabled: p.isEnabled,
+            createdAt: p.createdAt,
+            categories: (p.categories || []).map(serializeCategory)
+        }));
+    }
+
     async create(data, options = {}) {
         const { categories = [], variants = [] } = options;
         const product = await Product.create({ ...data, categories });
@@ -240,6 +287,55 @@ class SqlProductRepository {
         const product = await ProductSql.findByPk(id, { include: PRODUCT_INCLUDE });
 
         return product ? serializeSqlProduct(product) : null;
+    }
+
+    async getByIds(ids) {
+        if (!ids.length) {
+            return [];
+        }
+
+        const products = await ProductSql.findAll({ where: { id: { [Op.in]: ids } }, include: PRODUCT_INCLUDE });
+        const byId = {};
+
+        products.forEach(p => {
+            byId[p.id] = p;
+        });
+
+        return ids.map(id => byId[id]).filter(Boolean).map(serializeSqlProduct);
+    }
+
+    // Documentos mínimos para alimentar el índice de búsqueda en memoria
+    async getSearchDocuments() {
+        const products = await ProductSql.findAll({ attributes: ['id', 'name', 'sku', 'shortDescription', 'longDescription'] });
+
+        return products.map(p => ({
+            id: String(p.id),
+            name: p.name,
+            sku: p.sku,
+            shortDescription: p.shortDescription || '',
+            longDescription: p.longDescription || ''
+        }));
+    }
+
+    // Candidatos mínimos (con categorías) para filtros, facetas y orden en memoria
+    async findCandidates(ids = null) {
+        const where = ids ? { id: { [Op.in]: ids } } : {};
+        const products = await ProductSql.findAll({
+            where,
+            attributes: ['id', 'name', 'sku', 'price', 'stock', 'isEnabled', 'createdAt'],
+            include: [{ model: CategorySql, as: 'categories', through: { attributes: [] } }]
+        });
+
+        return products.map(p => ({
+            id: p.id,
+            name: p.name,
+            sku: p.sku,
+            price: Number(p.price),
+            stock: p.stock,
+            isEnabled: p.isEnabled,
+            createdAt: p.createdAt,
+            categories: (p.categories || []).map(serializeCategory)
+        }));
     }
 
     async create(data, options = {}) {
