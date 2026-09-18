@@ -8,6 +8,7 @@ import DiscountSql from '../modelsSql/Discount.js';
 import ProductSql from '../modelsSql/Product.js';
 import ProductVariantSql from '../modelsSql/ProductVariant.js';
 import ProductCategory from '../modelsSql/ProductCategory.js';
+import { isProductNew } from '../utils/productBadges.js';
 
 function serializeCategory(c) {
     return {
@@ -47,6 +48,8 @@ function serializeMongoProduct(p, variants, discount) {
         price: Number(p.price),
         stock: p.stock,
         isEnabled: p.isEnabled,
+        isFeatured: p.isFeatured === true,
+        isNew: isProductNew(p.newUntil),
         categories: (p.categories || []).map(serializeCategory),
         discount: discount ? serializeDiscount(discount) : null,
         variants: variants.map(serializeVariant),
@@ -66,6 +69,8 @@ function serializeSqlProduct(p) {
         price: Number(p.price),
         stock: p.stock,
         isEnabled: p.isEnabled,
+        isFeatured: p.isFeatured === true,
+        isNew: isProductNew(p.newUntil),
         categories: (p.categories || []).map(serializeCategory),
         discount: p.discount ? serializeDiscount(p.discount) : null,
         variants: (p.variants || []).map(serializeVariant),
@@ -127,6 +132,18 @@ class MongoProductRepository {
         return this._hydrate(products);
     }
 
+    async getFeatured() {
+        const products = await Product.find({ isEnabled: true, isFeatured: true }).sort({ createdAt: -1 }).populate('categories').lean();
+
+        return this._hydrate(products);
+    }
+
+    async getNewUntil() {
+        const products = await Product.find({ isEnabled: true, newUntil: { $gt: new Date() } }).sort({ createdAt: -1 }).populate('categories').lean();
+
+        return this._hydrate(products);
+    }
+
     async getById(id) {
         const product = await Product.findById(id).populate('categories').lean();
 
@@ -172,7 +189,7 @@ class MongoProductRepository {
     // Candidatos mínimos (con categorías) para filtros, facetas y orden en memoria
     async findCandidates(ids = null) {
         const filter = ids ? { _id: { $in: ids } } : {};
-        const products = await Product.find(filter, 'name sku price stock isEnabled createdAt').populate('categories').lean();
+        const products = await Product.find(filter, 'name sku price stock isEnabled isFeatured newUntil createdAt').populate('categories').lean();
 
         return products.map(p => ({
             id: String(p._id),
@@ -181,6 +198,8 @@ class MongoProductRepository {
             price: Number(p.price),
             stock: p.stock,
             isEnabled: p.isEnabled,
+            isFeatured: p.isFeatured === true,
+            newUntil: p.newUntil || null,
             createdAt: p.createdAt,
             categories: (p.categories || []).map(serializeCategory)
         }));
@@ -283,6 +302,26 @@ class SqlProductRepository {
         return products.map(serializeSqlProduct);
     }
 
+    async getFeatured() {
+        const products = await ProductSql.findAll({
+            where: { isEnabled: true, isFeatured: true },
+            include: PRODUCT_INCLUDE,
+            order: [['createdAt', 'DESC']]
+        });
+
+        return products.map(serializeSqlProduct);
+    }
+
+    async getNewUntil() {
+        const products = await ProductSql.findAll({
+            where: { isEnabled: true, newUntil: { [Op.gt]: new Date() } },
+            include: PRODUCT_INCLUDE,
+            order: [['createdAt', 'DESC']]
+        });
+
+        return products.map(serializeSqlProduct);
+    }
+
     async getById(id) {
         const product = await ProductSql.findByPk(id, { include: PRODUCT_INCLUDE });
 
@@ -322,7 +361,7 @@ class SqlProductRepository {
         const where = ids ? { id: { [Op.in]: ids } } : {};
         const products = await ProductSql.findAll({
             where,
-            attributes: ['id', 'name', 'sku', 'price', 'stock', 'isEnabled', 'createdAt'],
+            attributes: ['id', 'name', 'sku', 'price', 'stock', 'isEnabled', 'isFeatured', 'newUntil', 'createdAt'],
             include: [{ model: CategorySql, as: 'categories', through: { attributes: [] } }]
         });
 
@@ -333,6 +372,8 @@ class SqlProductRepository {
             price: Number(p.price),
             stock: p.stock,
             isEnabled: p.isEnabled,
+            isFeatured: p.isFeatured === true,
+            newUntil: p.newUntil || null,
             createdAt: p.createdAt,
             categories: (p.categories || []).map(serializeCategory)
         }));

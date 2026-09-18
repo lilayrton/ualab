@@ -48,6 +48,14 @@ const productSchema = new mongoose.Schema(
             type: Boolean,
             default: true
         },
+        isFeatured: {
+            type: Boolean,
+            default: false
+        },
+        newUntil: {
+            type: Date,
+            default: null
+        },
         categories: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: 'Category',

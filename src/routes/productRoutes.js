@@ -7,7 +7,9 @@ import {
     updateProduct,
     deleteProduct,
     searchProducts,
-    searchAdminProducts
+    searchAdminProducts,
+    getFeaturedProducts,
+    getNewProducts
 } from '../controllers/productController.js';
 import { protect, requireAdmin } from '../middlewares/auth.js';
 
@@ -15,6 +17,8 @@ const router = Router();
 
 // Sin token
 router.get('/public', getPublicProducts);
+router.get('/featured', getFeaturedProducts);
+router.get('/new', getNewProducts);
 router.get('/search', searchProducts);
 
 // Con token

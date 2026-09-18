@@ -39,6 +39,16 @@ Product.init({
         allowNull: false,
         defaultValue: true
     },
+    isFeatured: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    newUntil: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null
+    },
     discountId: {
         type: DataTypes.INTEGER,
         allowNull: true,

@@ -1,7 +1,8 @@
 import { getProductRepository } from '../repositories/ProductRepository.js';
 import { getCategoryRepository } from '../repositories/CategoryRepository.js';
 import { getDiscountRepository } from '../repositories/DiscountRepository.js';
-import { parseNumber, validateNonNegative } from '../utils/validators.js';
+import { parseNumber, parseDate, validateNonNegative } from '../utils/validators.js';
+import { isProductNew } from '../utils/productBadges.js';
 import { searchProducts as searchIndex, upsertProduct, removeProduct } from '../services/productSearchService.js';
 
 const SEARCH_SORTS = ['relevance', 'newest', 'priceLow', 'priceHigh', 'name'];
@@ -153,6 +154,8 @@ export async function createProduct(req, res) {
         price,
         stock,
         isEnabled,
+        isFeatured,
+        newUntil,
         categories,
         discountId,
         variants
@@ -199,6 +202,11 @@ export async function createProduct(req, res) {
         return res.status(400).json({ message: stockError });
     }
 
+    const newUntilResult = parseDate(newUntil, 'El campo newUntil');
+    if (newUntilResult.error) {
+        return res.status(400).json({ message: newUntilResult.error });
+    }
+
     if (discountId) {
         const discount = await discountRepo.getById(String(discountId));
         if (!discount) {
@@ -226,6 +234,8 @@ export async function createProduct(req, res) {
             price: priceResult.number,
             stock: stockResult.number,
             isEnabled: isEnabled ?? true,
+            isFeatured: isFeatured === undefined ? false : Boolean(isFeatured),
+            newUntil: newUntilResult.value,
             discountId: discountId ? String(discountId) : null
         },
         {
@@ -259,6 +269,8 @@ export async function updateProduct(req, res) {
         price,
         stock,
         isEnabled,
+        isFeatured,
+        newUntil,
         categories,
         discountId,
         variants
@@ -337,6 +349,19 @@ export async function updateProduct(req, res) {
         data.isEnabled = Boolean(isEnabled);
     }
 
+    if (isFeatured !== undefined) {
+        data.isFeatured = Boolean(isFeatured);
+    }
+
+    if (newUntil !== undefined) {
+        const newUntilResult = parseDate(newUntil, 'El campo newUntil');
+        if (newUntilResult.error) {
+            return res.status(400).json({ message: newUntilResult.error });
+        }
+
+        data.newUntil = newUntilResult.value;
+    }
+
     if (discountId !== undefined) {
         if (discountId) {
             const discount = await discountRepo.getById(String(discountId));
@@ -378,7 +403,7 @@ export async function updateProduct(req, res) {
 }
 
 function serializeSearchParams(req) {
-    const { q, sku, minPrice, maxPrice, inStock, sort, page, limit } = req.query;
+    const { q, sku, minPrice, maxPrice, inStock, sort, page, limit, featured, 'new': newFilter } = req.query;
     const params = { q: typeof q === 'string' ? q.trim() : '' };
 
     params.sort = sort ?? 'relevance';
@@ -444,6 +469,26 @@ function serializeSearchParams(req) {
         }
     }
 
+    if (featured !== undefined) {
+        if (featured === 'true') {
+            params.featured = true;
+        } else if (featured === 'false') {
+            params.featured = false;
+        } else {
+            return { error: 'El parámetro featured debe ser true o false' };
+        }
+    }
+
+    if (newFilter !== undefined) {
+        if (newFilter === 'true') {
+            params.newOnly = true;
+        } else if (newFilter === 'false') {
+            params.newOnly = false;
+        } else {
+            return { error: 'El parámetro new debe ser true o false' };
+        }
+    }
+
     if (typeof sku === 'string' && sku.trim()) {
         params.sku = sku.trim().toUpperCase();
     }
@@ -472,7 +517,9 @@ async function runSearch(req, res, { includeDisabled = false } = {}) {
         maxPrice,
         onlyInStock,
         sku,
-        categoryIds
+        categoryIds,
+        featured,
+        newOnly
     } = result.value;
 
     let candidateIds = null;
@@ -504,6 +551,18 @@ async function runSearch(req, res, { includeDisabled = false } = {}) {
 
     if (categoryIds.length) {
         candidates = candidates.filter(c => c.categories.some(cat => categoryIds.includes(cat.id)));
+    }
+
+    if (featured === true) {
+        candidates = candidates.filter(c => c.isFeatured);
+    } else if (featured === false) {
+        candidates = candidates.filter(c => !c.isFeatured);
+    }
+
+    if (newOnly === true) {
+        candidates = candidates.filter(c => isProductNew(c.newUntil));
+    } else if (newOnly === false) {
+        candidates = candidates.filter(c => !isProductNew(c.newUntil));
     }
 
     const rankMap = candidateIds ? new Map(candidateIds.map((id, index) => [String(id), index])) : null;
@@ -565,6 +624,20 @@ export async function searchProducts(req, res) {
 // GET /api/products/search/all - búsqueda de admin (incluye deshabilitados)
 export async function searchAdminProducts(req, res) {
     return runSearch(req, res, { includeDisabled: true });
+}
+
+// GET /api/products/featured - destacados de la vidriera (público)
+export async function getFeaturedProducts(req, res) {
+    const products = await getProductRepository().getFeatured();
+
+    res.json(products);
+}
+
+// GET /api/products/new - novedades de la vidriera (público, newUntil vigente)
+export async function getNewProducts(req, res) {
+    const products = await getProductRepository().getNewUntil();
+
+    res.json(products);
 }
 
 // DELETE /api/products/:id - eliminar producto (y sus variantes)
