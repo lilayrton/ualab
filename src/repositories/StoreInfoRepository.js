@@ -9,18 +9,18 @@ const STORE_INFO_ID = 1;
 const DEFAULT_STORE_INFO = {
     id: String(STORE_INFO_ID),
     name: 'UALab',
-    description: '',
-    address: '',
-    phone: '',
-    email: '',
-    whatsapp: '',
+    description: 'Sitio de insumos de laboratorio. Grupo 10. Aplicaciones Interactivas',
+    address: 'Lima 757, Ciudad Autónoma de Buenos Aires',
+    phone: '0800-122-8233',
+    email: 'contacto@uade.edu.ar',
+    whatsapp: '+54 9 11 7662-5199',
     logo: '',
-    hours: '',
+    hours: 'Lunes a Viernes de 9:00 a 20:00',
     social: {
-        facebook: '',
-        instagram: '',
-        twitter: '',
-        linkedin: ''
+        facebook: 'https://www.facebook.com/UADEOficial',
+        instagram: 'https://www.instagram.com/uadeoficial',
+        twitter: 'https://x.com/UADEoficial',
+        linkedin: 'https://www.linkedin.com/school/uade/'
     }
 };
 
