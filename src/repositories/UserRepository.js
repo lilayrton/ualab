@@ -1,15 +1,21 @@
 import User from '../models/User.js';
 import UserSql from '../modelsSql/User.js';
+import { serializeUser } from '../utils/serializers.js';
 
 class MongoUserRepository {
-    getAll() {
-        return User.find();
+    async getAll() {
+        const users = await User.find();
+
+        return users.map(serializeUser);
     }
 
-    getById(id) {
-        return User.findById(id);
+    async getById(id) {
+        const user = await User.findById(id);
+
+        return user ? serializeUser(user) : null;
     }
-    
+
+    // Se mantiene sin serializar: login necesita acceso a la contraseña para comparar
     getByEmail(email) {
         return User.findOne({ email }).select('+password');
     }
@@ -18,16 +24,47 @@ class MongoUserRepository {
         return User.exists({ email });
     }
 
-    create(data) {
-        return User.create(data);
+    async create(data) {
+        const user = await User.create(data);
+
+        return serializeUser(user);
     }
-    
-    update(id, data) {
-        return User.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+
+    async update(id, data) {
+        const user = await User.findById(id);
+
+        if (!user) {
+            return null;
+        }
+
+        // Se usa save() (y no findByIdAndUpdate) para que el hook pre('save')
+        // hashee la contraseña cuando el admin la cambia.
+        if (data.password !== undefined) {
+            user.password = data.password;
+        }
+
+        if (data.email !== undefined) {
+            user.email = data.email;
+        }
+
+        if (data.role !== undefined) {
+            user.role = data.role;
+        }
+
+        await user.save();
+
+        return serializeUser(user);
     }
 
     async remove(id) {
-        return User.findByIdAndDelete(id);
+        const deleted = await User.findByIdAndDelete(id);
+
+        return deleted ? { id } : null;
+    }
+
+    // Con contraseña incluida (para comparar en change-password o similar)
+    getByIdRaw(id) {
+        return User.findById(id).select('+password');
     }
 
     count() {
@@ -48,14 +85,19 @@ class MongoUserRepository {
 }
 
 class SqlUserRepository {
-    getAll() {
-        return UserSql.findAll();
+    async getAll() {
+        const users = await UserSql.findAll();
+
+        return users.map(serializeUser);
     }
 
-    getById(id) {
-        return UserSql.findByPk(id);
+    async getById(id) {
+        const user = await UserSql.findByPk(id);
+
+        return user ? serializeUser(user) : null;
     }
-    
+
+    // Se mantiene sin serializar: login necesita acceso a la contraseña para comparar
     getByEmail(email) {
         return UserSql.unscoped().findOne({ where: { email } });
     }
@@ -63,21 +105,28 @@ class SqlUserRepository {
     emailExists(email) {
         return UserSql.findOne({ where: { email }, attributes: ['id'] });
     }
-    
-    create(data) {
-        return UserSql.create(data);
+
+    async create(data) {
+        const user = await UserSql.create(data);
+
+        return serializeUser(user);
     }
-    
+
     async update(id, data) {
         const user = await UserSql.findByPk(id);
 
-        return user ? user.update(data) : null;
+        return user ? serializeUser(await user.update(data)) : null;
     }
 
     async remove(id) {
         const deleted = await UserSql.destroy({ where: { id } });
-        
+
         return deleted ? { id } : null;
+    }
+
+    // Con contraseña incluida (para comparar en change-password o similar)
+    getByIdRaw(id) {
+        return UserSql.unscoped().findByPk(id);
     }
 
     count() {

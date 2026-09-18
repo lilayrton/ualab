@@ -14,7 +14,7 @@ function prune(now, windowMs) {
     }
 }
 
-export function rateLimit({ windowMs, max, message = 'Demasiadas solicitudes. Intentá nuevamente más tarde.' } = {}) {
+export function rateLimit({ windowMs, max, message = 'Demasiadas solicitudes. Intentá nuevamente más tarde.', name = 'general' } = {}) {
     const windowMillis = windowMs ?? (Number(process.env.INQUIRY_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000);
     const maxRequests = max ?? (Number(process.env.INQUIRY_RATE_LIMIT_MAX) || 5);
 
@@ -25,7 +25,8 @@ export function rateLimit({ windowMs, max, message = 'Demasiadas solicitudes. In
             prune(now, windowMillis);
         }
 
-        const key = req.ip;
+        // El prefijo por nombre evita que un endpoint consuma el presupuesto de otro (misma IP)
+        const key = `${name}:${req.ip}`;
         const timestamps = (hits.get(key) || []).filter(time => now - time < windowMillis);
 
         if (timestamps.length >= maxRequests) {
@@ -39,4 +40,9 @@ export function rateLimit({ windowMs, max, message = 'Demasiadas solicitudes. In
 
         next();
     };
+}
+
+// Exclusivo para tests: limpia el acumulador en memoria
+export function clearRateLimitHits() {
+    hits.clear();
 }

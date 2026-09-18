@@ -8,82 +8,72 @@ import DiscountSql from '../modelsSql/Discount.js';
 import ProductSql from '../modelsSql/Product.js';
 import ProductVariantSql from '../modelsSql/ProductVariant.js';
 import ProductCategory from '../modelsSql/ProductCategory.js';
-import { isProductNew } from '../utils/productBadges.js';
-
-function serializeCategory(c) {
-    return {
-        id: String(c._id || c.id),
-        name: c.name,
-        slug: c.slug
-    };
-}
-
-function serializeDiscount(d) {
-    return {
-        id: String(d._id || d.id),
-        name: d.name,
-        type: d.type,
-        value: Number(d.value)
-    };
-}
-
-function serializeVariant(v) {
-    return {
-        id: String(v._id || v.id),
-        name: v.name,
-        sku: v.sku,
-        price: Number(v.price),
-        stock: v.stock
-    };
-}
-
-function serializeMongoProduct(p, variants, discount) {
-    return {
-        id: String(p._id),
-        name: p.name,
-        sku: p.sku,
-        images: p.images || [],
-        shortDescription: p.shortDescription || '',
-        longDescription: p.longDescription || '',
-        price: Number(p.price),
-        stock: p.stock,
-        isEnabled: p.isEnabled,
-        isFeatured: p.isFeatured === true,
-        isNew: isProductNew(p.newUntil),
-        categories: (p.categories || []).map(serializeCategory),
-        discount: discount ? serializeDiscount(discount) : null,
-        variants: variants.map(serializeVariant),
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt
-    };
-}
-
-function serializeSqlProduct(p) {
-    return {
-        id: p.id,
-        name: p.name,
-        sku: p.sku,
-        images: p.images || [],
-        shortDescription: p.shortDescription || '',
-        longDescription: p.longDescription || '',
-        price: Number(p.price),
-        stock: p.stock,
-        isEnabled: p.isEnabled,
-        isFeatured: p.isFeatured === true,
-        isNew: isProductNew(p.newUntil),
-        categories: (p.categories || []).map(serializeCategory),
-        discount: p.discount ? serializeDiscount(p.discount) : null,
-        variants: (p.variants || []).map(serializeVariant),
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt
-    };
-}
+import {
+    serializeProduct,
+    serializeProductCandidate
+} from '../utils/serializers.js';
 
 const PRODUCT_INCLUDE = [
     { model: CategorySql, as: 'categories', through: { attributes: [] } },
     { model: DiscountSql, as: 'discount' },
     { model: ProductVariantSql, as: 'variants' }
 ];
+
+// Soporte de transacciones multi-documento: se detecta la primera vez que se usa.
+// null = sin evaluar todavía; true/false = resultado del chequeo del replica set.
+let mongoTransactionSupport = null;
+
+// MongoDB exige replica set para transacciones (Atlas de pago o mongo local con --replSet).
+// En standalone o Atlas gratuito (M0) no hay transacciones y se usa el camino sin sesión.
+async function mongoSupportsTransactions() {
+    if (mongoTransactionSupport === null) {
+        try {
+            const hello = await Product.db.admin().command({ hello: 1 });
+            mongoTransactionSupport = Boolean(hello.setName);
+        } catch (error) {
+            mongoTransactionSupport = false;
+        }
+
+        if (!mongoTransactionSupport) {
+            console.warn('Mongo sin replica set: las operaciones multi-documento corren sin transacción');
+        }
+    }
+
+    return mongoTransactionSupport;
+}
+
+// Ejecuta la operación dentro de una transacción de sesión cuando el deployment la soporta.
+// Si no la soporta (o el servidor la rechaza puntualmente) se reintenta sin sesión.
+async function withMongoTransaction(runInTransaction, runWithoutTransaction) {
+    if (!(await mongoSupportsTransactions())) {
+        return runWithoutTransaction();
+    }
+
+    const session = await Product.startSession();
+
+    try {
+        let result;
+
+        await session.withTransaction(async () => {
+            result = await runInTransaction(session);
+        });
+
+        return result;
+    } catch (error) {
+        if (/transaction numbers are only allowed|standalone/i.test(error.message || '')) {
+            if (mongoTransactionSupport) {
+                mongoTransactionSupport = false;
+                console.warn('Transacción rechazada por el servidor: se usa el camino sin sesión');
+            }
+
+            return runWithoutTransaction();
+        }
+
+        throw error;
+    } finally {
+        await session.endSession();
+    }
+}
 
 class MongoProductRepository {
     // Completa cada producto con sus variantes y el descuento asociado
@@ -113,10 +103,12 @@ class MongoProductRepository {
             discountMap[String(d._id)] = d;
         });
 
-        return products.map(p => serializeMongoProduct(
+        return products.map(p => serializeProduct(
             p,
-            variantsByProduct[String(p._id)] || [],
-            discountMap[String(p.discountId)] || null
+            {
+                variants: variantsByProduct[String(p._id)] || [],
+                discount: discountMap[String(p.discountId)] || null
+            }
         ));
     }
 
@@ -191,29 +183,39 @@ class MongoProductRepository {
         const filter = ids ? { _id: { $in: ids } } : {};
         const products = await Product.find(filter, 'name sku price stock isEnabled isFeatured newUntil createdAt').populate('categories').lean();
 
-        return products.map(p => ({
-            id: String(p._id),
-            name: p.name,
-            sku: p.sku,
-            price: Number(p.price),
-            stock: p.stock,
-            isEnabled: p.isEnabled,
-            isFeatured: p.isFeatured === true,
-            newUntil: p.newUntil || null,
-            createdAt: p.createdAt,
-            categories: (p.categories || []).map(serializeCategory)
-        }));
+        return products.map(serializeProductCandidate);
     }
 
     async create(data, options = {}) {
         const { categories = [], variants = [] } = options;
-        const product = await Product.create({ ...data, categories });
 
-        if (variants.length) {
-            await ProductVariant.insertMany(variants.map(v => ({ ...v, productId: product._id })));
-        }
+        // Creación atómica: producto + variantes dentro de la misma transacción (si el deployment lo permite)
+        const createInTransaction = async (session) => {
+            const product = await Product.create({ ...data, categories }, { session });
 
-        return this.getById(product._id);
+            if (variants.length) {
+                await ProductVariant.insertMany(
+                    variants.map(v => ({ ...v, productId: product._id })),
+                    { session }
+                );
+            }
+
+            return product._id;
+        };
+
+        const createWithoutTransaction = async () => {
+            const product = await Product.create({ ...data, categories });
+
+            if (variants.length) {
+                await ProductVariant.insertMany(variants.map(v => ({ ...v, productId: product._id })));
+            }
+
+            return product._id;
+        };
+
+        const productId = await withMongoTransaction(createInTransaction, createWithoutTransaction);
+
+        return this.getById(productId);
     }
 
     async update(id, data, options = {}) {
@@ -224,31 +226,87 @@ class MongoProductRepository {
             updateData.categories = categories;
         }
 
-        const product = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
-        if (!product) {
+        // Actualización atómica: producto + reemplazo de variantes dentro de la misma transacción
+        const updateInTransaction = async (session) => {
+            const product = await Product.findByIdAndUpdate(id, updateData, {
+                new: true,
+                runValidators: true,
+                session
+            });
+
+            if (!product) {
+                return null;
+            }
+
+            if (variants !== undefined) {
+                await this._replaceVariantsInTransaction(product._id, variants, session);
+            }
+
+            return product._id;
+        };
+
+        const updateWithoutTransaction = async () => {
+            const product = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+
+            if (!product) {
+                return null;
+            }
+
+            if (variants !== undefined) {
+                await this._replaceVariantsInTransaction(product._id, variants);
+            }
+
+            return product._id;
+        };
+
+        const productId = await withMongoTransaction(updateInTransaction, updateWithoutTransaction);
+
+        if (!productId) {
             return null;
         }
 
-        if (variants !== undefined) {
-            await ProductVariant.deleteMany({ productId: product._id });
+        return this.getById(productId);
+    }
 
-            if (variants.length) {
-                await ProductVariant.insertMany(variants.map(v => ({ ...v, productId: product._id })));
-            }
+    // Borra y recrea las variantes de un producto (acepta sesión para transacciones o nada para el modo simple)
+    async _replaceVariantsInTransaction(productId, variants, session = null) {
+        await ProductVariant.deleteMany({ productId }, session ? { session } : {});
+
+        if (variants?.length) {
+            await ProductVariant.insertMany(
+                variants.map(v => ({ ...v, productId })),
+                session ? { session } : {}
+            );
         }
-
-        return this.getById(product._id);
     }
 
     async remove(id) {
-        const product = await Product.findByIdAndDelete(id);
-        if (!product) {
-            return null;
-        }
+        // Borrado atómico: variantes + producto dentro de la misma transacción (si el deployment lo permite)
+        const removeInTransaction = async (session) => {
+            const product = await Product.findByIdAndDelete(id, { session });
 
-        await ProductVariant.deleteMany({ productId: id });
+            if (!product) {
+                return null;
+            }
 
-        return { id };
+            await ProductVariant.deleteMany({ productId: id }, { session });
+
+            return { id };
+        };
+
+        const removeWithoutTransaction = async () => {
+            const product = await Product.findByIdAndDelete(id);
+
+            if (!product) {
+                return null;
+            }
+
+            await ProductVariant.deleteMany({ productId: id });
+
+            return { id };
+        };
+
+        return withMongoTransaction(removeInTransaction, removeWithoutTransaction);
     }
 
     getVariants(productId) {
@@ -289,7 +347,7 @@ class SqlProductRepository {
     async getAll() {
         const products = await ProductSql.findAll({ include: PRODUCT_INCLUDE, order: [['createdAt', 'DESC']] });
 
-        return products.map(serializeSqlProduct);
+        return products.map(p => serializeProduct(p, { variants: p.variants || [], discount: p.discount || null }));
     }
 
     async getPublic() {
@@ -299,7 +357,7 @@ class SqlProductRepository {
             order: [['createdAt', 'DESC']]
         });
 
-        return products.map(serializeSqlProduct);
+        return products.map(p => serializeProduct(p, { variants: p.variants || [], discount: p.discount || null }));
     }
 
     async getFeatured() {
@@ -309,7 +367,7 @@ class SqlProductRepository {
             order: [['createdAt', 'DESC']]
         });
 
-        return products.map(serializeSqlProduct);
+        return products.map(p => serializeProduct(p, { variants: p.variants || [], discount: p.discount || null }));
     }
 
     async getNewUntil() {
@@ -319,13 +377,13 @@ class SqlProductRepository {
             order: [['createdAt', 'DESC']]
         });
 
-        return products.map(serializeSqlProduct);
+        return products.map(p => serializeProduct(p, { variants: p.variants || [], discount: p.discount || null }));
     }
 
     async getById(id) {
         const product = await ProductSql.findByPk(id, { include: PRODUCT_INCLUDE });
 
-        return product ? serializeSqlProduct(product) : null;
+        return product ? serializeProduct(product, { variants: product.variants || [], discount: product.discount || null }) : null;
     }
 
     async getByIds(ids) {
@@ -340,7 +398,8 @@ class SqlProductRepository {
             byId[p.id] = p;
         });
 
-        return ids.map(id => byId[id]).filter(Boolean).map(serializeSqlProduct);
+        return ids.map(id => byId[id]).filter(Boolean)
+            .map(p => serializeProduct(p, { variants: p.variants || [], discount: p.discount || null }));
     }
 
     // Documentos mínimos para alimentar el índice de búsqueda en memoria
@@ -365,18 +424,7 @@ class SqlProductRepository {
             include: [{ model: CategorySql, as: 'categories', through: { attributes: [] } }]
         });
 
-        return products.map(p => ({
-            id: p.id,
-            name: p.name,
-            sku: p.sku,
-            price: Number(p.price),
-            stock: p.stock,
-            isEnabled: p.isEnabled,
-            isFeatured: p.isFeatured === true,
-            newUntil: p.newUntil || null,
-            createdAt: p.createdAt,
-            categories: (p.categories || []).map(serializeCategory)
-        }));
+        return products.map(serializeProductCandidate);
     }
 
     async create(data, options = {}) {

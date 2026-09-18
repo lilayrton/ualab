@@ -5,7 +5,8 @@ const productVariantSchema = new mongoose.Schema(
         productId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Product',
-            required: [true, 'La variante debe pertenecer a un producto']
+            required: [true, 'La variante debe pertenecer a un producto'],
+            index: true
         },
         name: {
             type: String,

@@ -1,18 +1,4 @@
-export function serializeCategory(category) {
-    const raw = category.toJSON ? category.toJSON() : category;
-
-    return {
-        id: String(raw._id ?? raw.id),
-        name: raw.name,
-        description: raw.description ?? '',
-        slug: raw.slug,
-        isEnabled: raw.isEnabled,
-        sortOrder: raw.sortOrder ?? 0,
-        parentId: raw.parentId ? String(raw.parentId) : null,
-        createdAt: raw.createdAt,
-        updatedAt: raw.updatedAt
-    };
-}
+import { serializeCategory } from './serializers.js';
 
 export function isDescendant(categories, categoryId, candidateId) {
     if (String(categoryId) === String(candidateId)) {

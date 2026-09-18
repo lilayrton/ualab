@@ -18,6 +18,17 @@ function createTransporter() {
     });
 }
 
+// Transportador reutilizado entre envíos (crear uno por email desperdicia conexiones)
+let transporter = null;
+
+function getTransporter() {
+    if (!transporter) {
+        transporter = createTransporter();
+    }
+
+    return transporter;
+}
+
 // Envía el mail de recuperación de contraseña.
 // Sin SMTP configurado, se simula el envío mostrando el link por consola para probar.
 // Nunca da errores...si el envío falla, se loguea, pero no rompe el flujo.
@@ -35,8 +46,7 @@ export async function sendPasswordResetEmail(email, resetLink, storeName = 'UALa
     }
 
     try {
-        const transporter = createTransporter();
-        await transporter.sendMail({
+        await getTransporter().sendMail({
             from: buildSender(storeName),
             to: email,
             subject,
@@ -95,8 +105,7 @@ export async function sendInquiryEmail(inquiry, { to, storeName = 'UALab' } = {}
     }
 
     try {
-        const transporter = createTransporter();
-        await transporter.sendMail({
+        await getTransporter().sendMail({
             from: buildSender(storeName),
             to,
             replyTo: inquiry.email,
@@ -123,8 +132,7 @@ export async function sendInquiryConfirmation(inquiry, { storeName = 'UALab', re
     }
 
     try {
-        const transporter = createTransporter();
-        await transporter.sendMail({
+        await getTransporter().sendMail({
             from: buildSender(storeName),
             to: inquiry.email,
             replyTo: replyTo || undefined,

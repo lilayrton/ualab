@@ -36,7 +36,8 @@ Profile.init({
 }, {
     sequelize,
     modelName: 'Profile',
-    tableName: 'profiles'
+    tableName: 'profiles',
+    timestamps: true // Igualamos el comportamiento del modelo Mongo (createdAt/updatedAt)
 });
 
 export default Profile;

@@ -59,17 +59,24 @@ const productSchema = new mongoose.Schema(
         categories: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: 'Category',
-            default: []
+            default: [],
+            index: true
         },
         discountId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Discount',
-            default: null
+            default: null,
+            index: true
         }
     },
     {
         timestamps: true
     }
 );
+
+// Índices para las queries más usadas
+productSchema.index({ createdAt: -1 }); // Listados ordenados por más reciente
+productSchema.index({ isEnabled: 1, isFeatured: 1 }); // Vidriera de destacados
+productSchema.index({ isEnabled: 1, newUntil: 1 }); // Vidriera de novedades
 
 export default mongoose.model('Product', productSchema, 'products');

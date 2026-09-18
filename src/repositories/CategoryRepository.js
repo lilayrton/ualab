@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
 import Category from '../models/Category.js';
 import CategorySql from '../modelsSql/Category.js';
-import { buildTree, isDescendant, serializeCategory } from '../utils/categoryTree.js';
+import { buildTree, isDescendant } from '../utils/categoryTree.js';
+import { serializeCategory } from '../utils/serializers.js';
 
 class MongoCategoryRepository {
     async getAll() {

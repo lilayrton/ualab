@@ -1,40 +1,13 @@
 import { Op } from 'sequelize';
 import Discount from '../models/Discount.js';
 import DiscountSql from '../modelsSql/Discount.js';
-
-function serializeMongoDiscount(d) {
-    return {
-        id: String(d._id),
-        name: d.name,
-        type: d.type,
-        value: Number(d.value),
-        isEnabled: d.isEnabled,
-        validFrom: d.validFrom,
-        validTo: d.validTo,
-        createdAt: d.createdAt,
-        updatedAt: d.updatedAt
-    };
-}
-
-function serializeSqlDiscount(d) {
-    return {
-        id: d.id,
-        name: d.name,
-        type: d.type,
-        value: Number(d.value),
-        isEnabled: d.isEnabled,
-        validFrom: d.validFrom,
-        validTo: d.validTo,
-        createdAt: d.createdAt,
-        updatedAt: d.updatedAt
-    };
-}
+import { serializeDiscount } from '../utils/serializers.js';
 
 class MongoDiscountRepository {
     async getAll() {
         const discounts = await Discount.find().sort({ name: 1 });
 
-        return discounts.map(serializeMongoDiscount);
+        return discounts.map(serializeDiscount);
     }
 
     // Descuentos habilitados y dentro de su ventana de vigencia
@@ -42,23 +15,19 @@ class MongoDiscountRepository {
         const now = new Date();
         const discounts = await Discount.find({
             isEnabled: true,
-            $or: [
-                { validFrom: null },
-                { validFrom: { $lte: now } }
-            ],
-            $or: [
-                { validTo: null },
-                { validTo: { $gte: now } }
+            $and: [
+                { $or: [{ validFrom: null }, { validFrom: { $lte: now } }] },
+                { $or: [{ validTo: null }, { validTo: { $gte: now } }] }
             ]
         }).sort({ name: 1 });
 
-        return discounts.map(serializeMongoDiscount);
+        return discounts.map(serializeDiscount);
     }
 
     async getById(id) {
         const discount = await Discount.findById(id);
 
-        return discount ? serializeMongoDiscount(discount) : null;
+        return discount ? serializeDiscount(discount) : null;
     }
 
     create(data) {
@@ -68,7 +37,7 @@ class MongoDiscountRepository {
     async update(id, data) {
         const discount = await Discount.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 
-        return discount ? serializeMongoDiscount(discount) : null;
+        return discount ? serializeDiscount(discount) : null;
     }
 
     async remove(id) {
@@ -82,7 +51,7 @@ class SqlDiscountRepository {
     async getAll() {
         const discounts = await DiscountSql.findAll({ order: [['name', 'ASC']] });
 
-        return discounts.map(serializeSqlDiscount);
+        return discounts.map(serializeDiscount);
     }
 
     // Descuentos habilitados y dentro de su ventana de vigencia
@@ -99,13 +68,13 @@ class SqlDiscountRepository {
             order: [['name', 'ASC']]
         });
 
-        return discounts.map(serializeSqlDiscount);
+        return discounts.map(serializeDiscount);
     }
 
     async getById(id) {
         const discount = await DiscountSql.findByPk(id);
 
-        return discount ? serializeSqlDiscount(discount) : null;
+        return discount ? serializeDiscount(discount) : null;
     }
 
     create(data) {
@@ -121,7 +90,7 @@ class SqlDiscountRepository {
 
         const updated = await discount.update(data);
 
-        return serializeSqlDiscount(updated);
+        return serializeDiscount(updated);
     }
 
     async remove(id) {

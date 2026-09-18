@@ -1,5 +1,6 @@
-import { getCategoryRepository } from "../repositories/CategoryRepository.js";
+import { getCategoryRepository } from '../repositories/CategoryRepository.js';
 import { slugify } from '../utils/slug.js';
+import { parseNumber, parseBoolean, isValidId } from '../utils/validators.js';
 
 // GET /api/categories/public - categorías habilitadas (sin token)
 export async function getPublicCategories(req, res) {
@@ -24,6 +25,10 @@ export async function getCategoryTree(req, res) {
 
 // GET /api/categories/:id - detalle
 export async function getCategory(req, res) {
+    if (!isValidId(req.params.id)) {
+        return res.status(404).json({ message: 'Categoría no encontrada' });
+    }
+
     const category = await getCategoryRepository().getById(req.params.id);
 
     if (!category) {
@@ -39,7 +44,7 @@ export async function createCategory(req, res) {
 
     const { name, description, slug, isEnabled, sortOrder, parentId } = req.body;
 
-    if (!name || !name.trim()) {
+    if (typeof name !== 'string' || !name.trim()) {
         return res.status(400).json({ message: 'El nombre de la categoría es obligatorio' });
     }
 
@@ -51,18 +56,28 @@ export async function createCategory(req, res) {
         }
     }
 
-    const finalSlug = slug?.trim() ? slug.trim() : slugify(name);
+    const finalSlug = typeof slug === 'string' && slug.trim() ? slug.trim() : slugify(name);
 
     if (await categoryRepo.slugExists(finalSlug)) {
         return res.status(400).json({ message: `El slug "${finalSlug}" ya está en uso` });
+    }
+
+    const enabledResult = isEnabled === undefined ? { value: true } : parseBoolean(isEnabled, 'El campo isEnabled');
+    if (enabledResult.error) {
+        return res.status(400).json({ message: enabledResult.error });
+    }
+
+    const sortResult = sortOrder === undefined ? { value: 0 } : parseNumber(sortOrder, 'El campo sortOrder');
+    if (sortResult.error) {
+        return res.status(400).json({ message: sortResult.error });
     }
 
     const category = await categoryRepo.create({
         name: name.trim(),
         description: description?.trim() ?? '',
         slug: finalSlug,
-        isEnabled: isEnabled ?? true,
-        sortOrder: sortOrder ?? 0,
+        isEnabled: enabledResult.value,
+        sortOrder: sortResult.value,
         parentId: parentId ?? null
     });
 
@@ -71,6 +86,10 @@ export async function createCategory(req, res) {
 
 // PUT /api/categories/:id - actualizar categoría
 export async function updateCategory(req, res) {
+    if (!isValidId(req.params.id)) {
+        return res.status(404).json({ message: 'Categoría no encontrada' });
+    }
+
     const categoryRepo = getCategoryRepository();
 
     const existing = await categoryRepo.getById(req.params.id);
@@ -83,6 +102,10 @@ export async function updateCategory(req, res) {
     const data = {};
 
     if (name !== undefined) {
+        if (typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({ message: 'El nombre de la categoría no puede estar vacío' });
+        }
+
         data.name = name.trim();
     }
 
@@ -91,11 +114,21 @@ export async function updateCategory(req, res) {
     }
 
     if (isEnabled !== undefined) {
-        data.isEnabled = isEnabled;
+        const boolResult = parseBoolean(isEnabled, 'El campo isEnabled');
+        if (boolResult.error) {
+            return res.status(400).json({ message: boolResult.error });
+        }
+
+        data.isEnabled = boolResult.value;
     }
     
     if (sortOrder !== undefined) {
-        data.sortOrder = sortOrder;
+        const sortResult = parseNumber(sortOrder, 'El campo sortOrder');
+        if (sortResult.error) {
+            return res.status(400).json({ message: sortResult.error });
+        }
+
+        data.sortOrder = sortResult.value;
     }
 
     if (slug !== undefined) {
@@ -137,6 +170,10 @@ export async function updateCategory(req, res) {
 
 // DELETE /api/categories/:id - eliminar categoría
 export async function deleteCategory(req, res) {
+    if (!isValidId(req.params.id)) {
+        return res.status(404).json({ message: 'Categoría no encontrada' });
+    }
+
     const categoryRepo = getCategoryRepository();
 
     const existing = await categoryRepo.getById(req.params.id);

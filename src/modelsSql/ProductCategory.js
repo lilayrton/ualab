@@ -16,7 +16,12 @@ ProductCategory.init({
     sequelize,
     modelName: 'ProductCategory',
     tableName: 'product_categories',
-    timestamps: false
+    timestamps: false,
+    indexes: [
+        // Evita categorías duplicadas en un mismo producto
+        { unique: true, fields: ['productId', 'categoryId'] },
+        { fields: ['categoryId'] }
+    ]
 });
 
 export default ProductCategory;

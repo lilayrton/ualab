@@ -1,32 +1,48 @@
 import Profile from '../models/Profile.js';
 import ProfileSql from '../modelsSql/Profile.js';
+import { serializeProfile } from '../utils/serializers.js';
 
 class MongoProfileRepository {
-    getByUserId(userId) {
-        return Profile.findOne({ user: userId });
+    async getByUserId(userId) {
+        const profile = await Profile.findOne({ user: userId });
+
+        return profile ? serializeProfile(profile) : null;
     }
-    
-    create(userId, data) {
-        return Profile.create({ user: userId, ...data });
+
+    async create(userId, data) {
+        const profile = await Profile.create({ user: userId, ...data });
+
+        return serializeProfile(profile);
     }
-    
-    updateByUserId(userId, data) {
-        return Profile.findOneAndUpdate({ user: userId }, data, { new: true, runValidators: true });
+
+    async updateByUserId(userId, data) {
+        const profile = await Profile.findOneAndUpdate({ user: userId }, data, { new: true, runValidators: true });
+
+        return profile ? serializeProfile(profile) : null;
     }
 }
 
 class SqlProfileRepository {
-    getByUserId(userId) {
-        return ProfileSql.findOne({ where: { userId } });
+    async getByUserId(userId) {
+        const profile = await ProfileSql.findOne({ where: { userId } });
+
+        return profile ? serializeProfile(profile) : null;
     }
-    
-    create(userId, data) {
-        return ProfileSql.create({ userId, ...data });
+
+    async create(userId, data) {
+        const profile = await ProfileSql.create({ userId, ...data });
+
+        return serializeProfile(profile);
     }
-    
+
     async updateByUserId(userId, data) {
         const profile = await ProfileSql.findOne({ where: { userId } });
-        return profile ? profile.update(data) : null;
+
+        if (!profile) {
+            return null;
+        }
+
+        return serializeProfile(await profile.update(data));
     }
 }
 

@@ -1,6 +1,6 @@
 import { getDiscountRepository } from '../repositories/DiscountRepository.js';
 import { getProductRepository } from '../repositories/ProductRepository.js';
-import { parseNumber, parseDate, validateNonNegative } from '../utils/validators.js';
+import { parseNumber, parseBoolean, parseDate, validateNonNegative, isValidId } from '../utils/validators.js';
 
 function validateDiscountValue(value, type) {
     if (type === 'percent' && (value < 1 || value > 100)) {
@@ -30,6 +30,10 @@ export async function getDiscounts(req, res) {
 
 // GET /api/discounts/:id - detalle
 export async function getDiscount(req, res) {
+    if (!isValidId(req.params.id)) {
+        return res.status(404).json({ message: 'Descuento no encontrado' });
+    }
+
     const discount = await getDiscountRepository().getById(req.params.id);
 
     if (!discount) {
@@ -43,7 +47,7 @@ export async function getDiscount(req, res) {
 export async function createDiscount(req, res) {
     const { name, type, value, isEnabled, validFrom, validTo } = req.body;
 
-    if (!name || !name.trim()) {
+    if (typeof name !== 'string' || !name.trim()) {
         return res.status(400).json({ message: 'El nombre del descuento es obligatorio' });
     }
 
@@ -76,11 +80,16 @@ export async function createDiscount(req, res) {
         return res.status(400).json({ message: 'validFrom no puede ser posterior a validTo' });
     }
 
+    const enabledResult = isEnabled === undefined ? { value: true } : parseBoolean(isEnabled, 'El campo isEnabled');
+    if (enabledResult.error) {
+        return res.status(400).json({ message: enabledResult.error });
+    }
+
     const discount = await getDiscountRepository().create({
         name: name.trim(),
         type,
         value: valueResult.number,
-        isEnabled: isEnabled ?? true,
+        isEnabled: enabledResult.value,
         validFrom: fromResult.value,
         validTo: toResult.value
     });
@@ -90,6 +99,10 @@ export async function createDiscount(req, res) {
 
 // PUT /api/discounts/:id - actualizar descuento
 export async function updateDiscount(req, res) {
+    if (!isValidId(req.params.id)) {
+        return res.status(404).json({ message: 'Descuento no encontrado' });
+    }
+
     const discountRepo = getDiscountRepository();
 
     const existing = await discountRepo.getById(req.params.id);
@@ -101,7 +114,7 @@ export async function updateDiscount(req, res) {
     const data = {};
 
     if (name !== undefined) {
-        if (!name.trim()) {
+        if (typeof name !== 'string' || !name.trim()) {
             return res.status(400).json({ message: 'El nombre del descuento no puede estar vacío' });
         }
 
@@ -134,7 +147,12 @@ export async function updateDiscount(req, res) {
     }
 
     if (isEnabled !== undefined) {
-        data.isEnabled = Boolean(isEnabled);
+        const boolResult = parseBoolean(isEnabled, 'El campo isEnabled');
+        if (boolResult.error) {
+            return res.status(400).json({ message: boolResult.error });
+        }
+
+        data.isEnabled = boolResult.value;
     }
 
     let fromValue = existing.validFrom;
@@ -171,6 +189,10 @@ export async function updateDiscount(req, res) {
 
 // DELETE /api/discounts/:id - eliminar descuento
 export async function deleteDiscount(req, res) {
+    if (!isValidId(req.params.id)) {
+        return res.status(404).json({ message: 'Descuento no encontrado' });
+    }
+
     const existing = await getDiscountRepository().getById(req.params.id);
     if (!existing) {
         return res.status(404).json({ message: 'Descuento no encontrado' });

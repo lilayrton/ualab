@@ -30,7 +30,8 @@ const categorySchema = new mongoose.Schema(
         parentId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Category',
-            default: null
+            default: null,
+            index: true
         }
     },
     {

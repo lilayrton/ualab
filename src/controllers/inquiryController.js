@@ -2,6 +2,7 @@ import { getInquiryRepository } from '../repositories/InquiryRepository.js';
 import { getProductRepository } from '../repositories/ProductRepository.js';
 import { getStoreInfoRepository } from '../repositories/StoreInfoRepository.js';
 import { sendInquiryEmail, sendInquiryConfirmation } from '../utils/mailer.js';
+import { isValidId } from '../utils/validators.js';
 
 const STATUSES = ['pending', 'read', 'replied'];
 const MAX_LENGTHS = {
@@ -123,6 +124,10 @@ export async function getInquiryStats(req, res) {
 
 // GET /api/inquiries/:id - detalle
 export async function getInquiry(req, res) {
+    if (!isValidId(req.params.id)) {
+        return res.status(404).json({ message: 'Consulta no encontrada' });
+    }
+
     const inquiry = await getInquiryRepository().getById(req.params.id);
     if (!inquiry) {
         return res.status(404).json({ message: 'Consulta no encontrada' });
@@ -133,6 +138,10 @@ export async function getInquiry(req, res) {
 
 // PATCH /api/inquiries/:id/status - marcar como leída, respondida o pendiente
 export async function updateInquiryStatus(req, res) {
+    if (!isValidId(req.params.id)) {
+        return res.status(404).json({ message: 'Consulta no encontrada' });
+    }
+
     const { status } = req.body;
 
     if (!STATUSES.includes(status)) {
@@ -149,6 +158,10 @@ export async function updateInquiryStatus(req, res) {
 
 // DELETE /api/inquiries/:id - eliminar consulta
 export async function deleteInquiry(req, res) {
+    if (!isValidId(req.params.id)) {
+        return res.status(404).json({ message: 'Consulta no encontrada' });
+    }
+
     const existing = await getInquiryRepository().getById(req.params.id);
     if (!existing) {
         return res.status(404).json({ message: 'Consulta no encontrada' });

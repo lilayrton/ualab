@@ -2,38 +2,13 @@ import { Op } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import Inquiry from '../models/Inquiry.js';
 import InquirySql from '../modelsSql/Inquiry.js';
+import { serializeInquiry } from '../utils/serializers.js';
 
 const SEARCHABLE_FIELDS = ['name', 'email', 'subject', 'message', 'productName', 'productSku'];
 
 // Escapa caracteres especiales para usar el texto como expresión regular
 function escapeRegExp(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function serializeInquiry(inquiry) {
-    const raw = inquiry.toJSON ? inquiry.toJSON() : inquiry;
-
-    return {
-        id: String(raw._id ?? raw.id),
-        name: raw.name,
-        email: raw.email,
-        phone: raw.phone ?? '',
-        subject: raw.subject ?? '',
-        message: raw.message,
-        source: raw.source,
-        productId: raw.productId ? String(raw.productId) : null,
-        productName: raw.productName ?? '',
-        productSku: raw.productSku ?? '',
-        variantId: raw.variantId ? String(raw.variantId) : null,
-        variantName: raw.variantName ?? '',
-        variantSku: raw.variantSku ?? '',
-        status: raw.status,
-        notified: raw.notified,
-        readAt: raw.readAt ?? null,
-        repliedAt: raw.repliedAt ?? null,
-        createdAt: raw.createdAt,
-        updatedAt: raw.updatedAt
-    };
 }
 
 // Fechas de los cambios de estado (al volver a pendiente se limpian)

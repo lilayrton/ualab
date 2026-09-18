@@ -1,5 +1,6 @@
 import StoreInfo from '../models/StoreInfo.js';
 import StoreInfoSql from '../modelsSql/StoreInfo.js';
+import { serializeStoreInfo } from '../utils/serializers.js';
 
 // Documento único (singleton): el id siempre es 1 en ambos motores
 const STORE_INFO_ID = 1;
@@ -25,32 +26,6 @@ const DEFAULT_STORE_INFO = {
 
 const TEXT_FIELDS = ['name', 'description', 'address', 'phone', 'email', 'whatsapp', 'logo', 'hours'];
 const SOCIAL_NETWORKS = ['facebook', 'instagram', 'twitter', 'linkedin'];
-
-// Sirve tanto para documentos Mongo como para filas SQL
-function serializeStoreInfo(record) {
-    const raw = record.toJSON ? record.toJSON() : record;
-    const social = raw.social || {};
-
-    return {
-        id: String(raw._id ?? raw.id),
-        name: raw.name ?? '',
-        description: raw.description ?? '',
-        address: raw.address ?? '',
-        phone: raw.phone ?? '',
-        email: raw.email ?? '',
-        whatsapp: raw.whatsapp ?? '',
-        logo: raw.logo ?? '',
-        hours: raw.hours ?? '',
-        social: {
-            facebook: social.facebook ?? raw.facebook ?? '',
-            instagram: social.instagram ?? raw.instagram ?? '',
-            twitter: social.twitter ?? raw.twitter ?? '',
-            linkedin: social.linkedin ?? raw.linkedin ?? ''
-        },
-        createdAt: raw.createdAt,
-        updatedAt: raw.updatedAt
-    };
-}
 
 // Combina los datos actuales con los recibidos (merge parcial, incluidas las redes)
 function mergeStoreInfo(base, data) {

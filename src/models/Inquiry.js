@@ -41,7 +41,8 @@ const inquirySchema = new mongoose.Schema(
                 values: ['pending', 'read', 'replied'],
                 message: 'El estado debe ser "pending", "read" o "replied"'
             },
-            default: 'pending'
+            default: 'pending',
+            index: true
         },
         notified: { type: Boolean, default: false },
         readAt: { type: Date, default: null },
@@ -51,5 +52,9 @@ const inquirySchema = new mongoose.Schema(
         timestamps: true
     }
 );
+
+// Índices para la bandeja de consultas y las estadísticas
+inquirySchema.index({ createdAt: -1 });
+inquirySchema.index({ productId: 1 });
 
 export default mongoose.model('Inquiry', inquirySchema, 'inquiries');

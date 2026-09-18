@@ -6,12 +6,15 @@ import {
     updateUser,
     deleteUser
 } from '../controllers/userController.js';
-import { protect } from '../middlewares/auth.js';
+import { protect, requireAdmin } from '../middlewares/auth.js';
 
 const router = Router();
 
 // Todas las rutas del ABM requieren un token válido
 router.use(protect);
+
+// El ABM de usuarios es exclusivo de administradores (se valida en production, dev y test)
+router.use(requireAdmin);
 
 router.get('/', getAllUsers);
 router.get('/:id', getUserById);

@@ -12,18 +12,47 @@ function signToken(id) {
 function signResetToken(id) {
     const secret = process.env.RESET_SECRET || process.env.JWT_SECRET;
 
-    return jwt.sign({ id }, secret, { expiresIn: '1h' });
+    return jwt.sign({ id, purpose: 'reset' }, secret, { expiresIn: '1h' });
+}
+
+// Normaliza el email ingresado para comparar y guardar de forma consistente entre motores
+function normalizeEmail(rawEmail) {
+    return String(rawEmail || '').trim().toLowerCase();
 }
 
 function getUserId(user) {
     return user.id ?? user._id;
 }
 
+// Opciones de la cookie de sesión (idénticas en login y register)
+function getCookieOptions() {
+    // COOKIE_SAME_SITE=none habilita la cookie en producción con dominios distintos (requiere HTTPS).
+    // Por defecto usamos lax: alcanza entre subdominios del mismo sitio y en dev localhost.
+    const sameSite = process.env.COOKIE_SAME_SITE === 'none' ? 'none' : 'lax';
+
+    return {
+        httpOnly: true, // Cookie no legible por JS en el navegador (anti XSS)
+        sameSite, // 'lax' protege de CSRF; 'none' solo si el frontend está en otro dominio
+        secure: sameSite === 'none' || process.env.NODE_ENV === 'production', // 'none' exige HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 1 día, como el token
+    };
+}
+
 // POST /api/auth/register
 export async function register(req, res) {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = normalizeEmail(req.body.email);
+
     if (!email || !password) {
         return res.status(400).json({ message: 'Todos los campos son obligatorios' });
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+        return res.status(400).json({ message: 'El email no es válido' });
+    }
+
+    if (typeof password !== 'string' || password.length < 6) {
+        return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
     }
 
     const userRepo = getUserRepository();
@@ -40,19 +69,16 @@ export async function register(req, res) {
 
     const id = getUserId(user);
     const token = signToken(id);
-    
-    res.cookie('token', token, {
-        httpOnly: true, // Cookie no legible por JS en el navegador (anti XSS)
-        sameSite: 'lax', // Protege de CSRF
-        maxAge: 24 * 60 * 60 * 1000 // 1 día, como el token
-    }).status(201).json({
+
+    res.cookie('token', token, getCookieOptions()).status(201).json({
         user: { id: id, email: user.email }
     });
 }
 
 // POST /api/auth/login
 export async function login(req, res) {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     if (!email || !password) {
         return res.status(400).json({ message: 'Email y contraseña son obligatorios' });
@@ -75,11 +101,7 @@ export async function login(req, res) {
     const id = getUserId(user);
     const token = signToken(id);
 
-    res.cookie('token', token, {
-        httpOnly: true, // Cookie no legible por JS en el navegador (anti XSS)
-        sameSite: 'lax', // Protege de CSRF
-        maxAge: 24 * 60 * 60 * 1000 // 1 día, como el token
-    }).json({
+    res.cookie('token', token, getCookieOptions()).json({
         user: { id: id, email: user.email }
     });
 }
@@ -93,7 +115,7 @@ export async function logout(req, res) {
 // POST /api/auth/forgot-password
 // Siempre responde lo mismo para no revelar qué emails están registrados y evitar problemas de seguridad.
 export async function forgotPassword(req, res) {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     if (!email) {
         return res.status(400).json({ message: 'El email es obligatorio' });
@@ -137,6 +159,11 @@ export async function resetPassword(req, res) {
         return res.status(400).json({ message: 'El enlace es inválido o expiró' });
     }
 
+    // Aceptamos únicamente tokens emitidos para reset de contraseña (no tokens de sesión)
+    if (payload.purpose !== 'reset') {
+        return res.status(400).json({ message: 'El enlace es inválido o expiró' });
+    }
+
     const userRepo = getUserRepository();
 
     const user = await userRepo.getById(payload.id);
@@ -145,6 +172,41 @@ export async function resetPassword(req, res) {
     }
 
     await userRepo.updatePassword(payload.id, newPassword);
+
+    res.status(200).json({ message: 'Contraseña actualizada correctamente' });
+}
+
+// POST /api/auth/change-password
+// Cambio de contraseña del usuario autenticado: se pide la actual para confirmar la identidad.
+export async function changePassword(req, res) {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: 'La contraseña actual y la nueva son obligatorias' });
+    }
+
+    if (typeof newPassword !== 'string' || newPassword.length < 6) {
+        return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+    if (newPassword === currentPassword) {
+        return res.status(400).json({ message: 'La nueva contraseña debe ser distinta de la actual' });
+    }
+
+    const userRepo = getUserRepository();
+
+    // Traemos el documento con la contraseña para compararla contra el hash de la actual
+    const user = await userRepo.getByIdRaw(req.user.id);
+    if (!user) {
+        return res.status(401).json({ message: 'No autorizado' });
+    }
+
+    const valid = await user.comparePassword(currentPassword);
+    if (!valid) {
+        return res.status(401).json({ message: 'La contraseña actual es incorrecta' });
+    }
+
+    await userRepo.updatePassword(req.user.id, newPassword);
 
     res.status(200).json({ message: 'Contraseña actualizada correctamente' });
 }

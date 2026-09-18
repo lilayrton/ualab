@@ -8,7 +8,7 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || 'img';
 // Nos aseguramos de que el directorio exista antes de recibir archivos
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-const ALLOWED_IMAGES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'];
+const ALLOWED_IMAGES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, UPLOAD_DIR),
@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 
 function imageFilter(req, file, cb) {
     if (!ALLOWED_IMAGES.includes(file.mimetype)) {
-        return cb(new Error('El archivo debe ser una imagen (png, jpg, webp, gif o svg)'));
+        return cb(new Error('El archivo debe ser una imagen (png, jpg, webp o gif)'));
     }
 
     cb(null, true);

@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 
-const SALT_ROUNDS = 10; // Hace 2^10 iteraciones de hashing (1024) de forma predeterminada
+const SALT_ROUNDS = 12; // Hace 2^12 iteraciones de hashing (4096) de forma predeterminada
 
 export function hashPassword(plainPassword) {
     return bcrypt.hash(plainPassword, SALT_ROUNDS);
