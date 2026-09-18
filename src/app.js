@@ -8,7 +8,9 @@ import profileRoutes from './routes/profileRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import discountRoutes from './routes/discountRoutes.js';
+import storeInfoRoutes from './routes/storeInfoRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { UPLOAD_DIR } from './middlewares/upload.js';
 
 const app = express();
 
@@ -17,12 +19,14 @@ app.use(morgan('dev')); // Para loggear peticiones HTTP en consola
 app.use(express.json()); // Para parsear payloads JSON entrantes
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use('/uploads', express.static(UPLOAD_DIR)); // Archivos subidos (logos, imágenes)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/discounts', discountRoutes);
+app.use('/api/store-info', storeInfoRoutes);
 
 // Ruta para probar
 app.get('/health', (req, res) => {

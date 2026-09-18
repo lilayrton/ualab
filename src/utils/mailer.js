@@ -21,9 +21,9 @@ function createTransporter() {
 // Envía el mail de recuperación de contraseña.
 // Sin SMTP configurado, se simula el envío mostrando el link por consola para probar.
 // Nunca da errores...si el envío falla, se loguea, pero no rompe el flujo.
-export async function sendPasswordResetEmail(email, resetLink) {
+export async function sendPasswordResetEmail(email, resetLink, storeName = 'UALab') {
     const subject = 'Recuperación de contraseña';
-    const text = `Recibimos una solicitud para restablecer la contraseña de tu cuenta de UALab.\n\n` +
+    const text = `Recibimos una solicitud para restablecer la contraseña de tu cuenta de ${storeName}.\n\n` +
         `Hacé click en este enlace (válido por 1 hora):\n\n${resetLink}\n\n` +
         `Si no fuiste vos, podés ignorar este mensaje.`;
 
@@ -37,7 +37,7 @@ export async function sendPasswordResetEmail(email, resetLink) {
     try {
         const transporter = createTransporter();
         await transporter.sendMail({
-            from: process.env.MAIL_FROM || `"UALab" <${process.env.SMTP_USER}>`,
+            from: process.env.MAIL_FROM || `"${storeName}" <${process.env.SMTP_USER}>`,
             to: email,
             subject,
             text

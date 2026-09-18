@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { getUserRepository } from '../repositories/UserRepository.js';
+import { getStoreInfoRepository } from '../repositories/StoreInfoRepository.js';
 import { sendPasswordResetEmail } from '../utils/mailer.js';
 
 // Generar token JWT firmado con el id del usuario
@@ -105,8 +106,9 @@ export async function forgotPassword(req, res) {
         const resetToken = signResetToken(id);
         const resetUrl = process.env.SITE_URL || 'http://localhost:3000';
         const resetLink = `${resetUrl}/reset-password?token=${resetToken}`;
+        const storeName = (await getStoreInfoRepository().get()).name;
 
-        await sendPasswordResetEmail(email, resetLink);
+        await sendPasswordResetEmail(email, resetLink, storeName);
     }
 
     res.status(200).json({
