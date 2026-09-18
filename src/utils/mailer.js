@@ -37,12 +37,103 @@ export async function sendPasswordResetEmail(email, resetLink, storeName = 'UALa
     try {
         const transporter = createTransporter();
         await transporter.sendMail({
-            from: process.env.MAIL_FROM || `"${storeName}" <${process.env.SMTP_USER}>`,
+            from: buildSender(storeName),
             to: email,
             subject,
             text
         });
     } catch (error) {
         console.error('[MAIL ERROR] No se pudo enviar el email:', error.message);
+    }
+}
+
+// Nombre visible del remitente según la configuración de la tienda
+function buildSender(storeName) {
+    return process.env.MAIL_FROM || `"${storeName}" <${process.env.SMTP_USER}>`;
+}
+
+// Arma el cuerpo del aviso con los datos de la consulta (incluye producto/variante si aplica)
+function buildInquiryText(inquiry) {
+    const lines = [
+        'Nueva consulta recibida desde la web.',
+        '',
+        `Nombre: ${inquiry.name}`,
+        `Email: ${inquiry.email}`
+    ];
+
+    if (inquiry.phone) {
+        lines.push(`Teléfono: ${inquiry.phone}`);
+    }
+
+    if (inquiry.subject) {
+        lines.push(`Asunto: ${inquiry.subject}`);
+    }
+
+    if (inquiry.productName) {
+        lines.push(`Producto: ${inquiry.productName} (SKU: ${inquiry.productSku})`);
+    }
+
+    if (inquiry.variantName) {
+        lines.push(`Variante: ${inquiry.variantName} (SKU: ${inquiry.variantSku})`);
+    }
+
+    lines.push('', 'Mensaje:', inquiry.message);
+
+    return lines.join('\n');
+}
+
+// Avisa a la tienda sobre una consulta nueva. Devuelve true si el mail se envió (o se simuló).
+export async function sendInquiryEmail(inquiry, { to, storeName = 'UALab' } = {}) {
+    const subject = `Nueva consulta${inquiry.subject ? `: ${inquiry.subject}` : ''}`;
+    const text = buildInquiryText(inquiry);
+
+    if (!hasSmtpConfig()) {
+        console.log('[MAIL SIMULADO] Aviso a tienda: ' + to);
+        console.log('[MAIL SIMULADO] Asunto: ' + subject);
+        console.log('[MAIL SIMULADO] Cuerpo:\n' + text);
+        return true;
+    }
+
+    try {
+        const transporter = createTransporter();
+        await transporter.sendMail({
+            from: buildSender(storeName),
+            to,
+            replyTo: inquiry.email,
+            subject,
+            text
+        });
+        return true;
+    } catch (error) {
+        console.error('[MAIL ERROR] No se pudo enviar el aviso de consulta:', error.message);
+        return false;
+    }
+}
+
+// Confirma al usuario que su consulta fue recibida
+export async function sendInquiryConfirmation(inquiry, { storeName = 'UALab', replyTo = '' } = {}) {
+    const subject = `Recibimos tu consulta - ${storeName}`;
+    const text = `Hola ${inquiry.name},\n\n` +
+        `Gracias por contactarte con ${storeName}. Recibimos tu consulta y te responderemos a la brevedad.\n\n` +
+        `Resumen de tu mensaje:\n${inquiry.message}`;
+
+    if (!hasSmtpConfig()) {
+        console.log('[MAIL SIMULADO] Confirmación a: ' + inquiry.email);
+        return true;
+    }
+
+    try {
+        const transporter = createTransporter();
+        await transporter.sendMail({
+            from: buildSender(storeName),
+            to: inquiry.email,
+            replyTo: replyTo || undefined,
+            subject,
+            text
+        });
+        return true;
+    } catch (error) {
+        console.error('[MAIL ERROR] No se pudo enviar la confirmación:', error.message);
+        return false;
     }
 }

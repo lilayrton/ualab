@@ -6,6 +6,7 @@ import Product from './Product.js';
 import ProductVariant from './ProductVariant.js';
 import ProductCategory from './ProductCategory.js';
 import StoreInfo from './StoreInfo.js';
+import Inquiry from './Inquiry.js';
 
 User.hasOne(Profile, { foreignKey: 'userId', unique: true });
 Profile.belongsTo(User, { foreignKey: 'userId' });
@@ -33,4 +34,4 @@ Category.belongsToMany(Product, {
 Product.hasMany(ProductVariant, { as: 'variants', foreignKey: 'productId' });
 ProductVariant.belongsTo(Product, { as: 'product', foreignKey: 'productId' });
 
-export { User, Profile, Category, Discount, Product, ProductVariant, ProductCategory, StoreInfo };
+export { User, Profile, Category, Discount, Product, ProductVariant, ProductCategory, StoreInfo, Inquiry };

@@ -9,6 +9,7 @@ import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import discountRoutes from './routes/discountRoutes.js';
 import storeInfoRoutes from './routes/storeInfoRoutes.js';
+import inquiryRoutes from './routes/inquiryRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { UPLOAD_DIR } from './middlewares/upload.js';
 
@@ -27,6 +28,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/store-info', storeInfoRoutes);
+app.use('/api/inquiries', inquiryRoutes);
 
 // Ruta para probar
 app.get('/health', (req, res) => {
