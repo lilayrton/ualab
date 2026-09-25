@@ -327,4 +327,133 @@ describe('Productos y búsqueda', () => {
         const res = await userAgent.post('/api/products').send({ name: 'x', sku: `NX${suffix}`, price: 1, stock: 1 });
         expect(res.status).toBe(403);
     });
+
+    // Regresión: en la colección Bruno se mandaban `description`, `featured` e
+    // `isNew` en vez de `shortDescription`, `isFeatured` y `newUntil`. Como la
+    // API descarta las claves desconocidas en silencio, los valores se perdían
+    // sin dar error. Estos tests fijan los nombres reales y el round-trip.
+    it('persiste shortDescription y longDescription al crear', async () => {
+        const res = await adminAgent.post('/api/products').send({
+            name: `Textos ${suffix}`, sku: `TXT${suffix}`, price: 100, stock: 1,
+            shortDescription: '  Corto con espacios  ',
+            longDescription: '  Largo con detalles  '
+        });
+
+        expect(res.status).toBe(201);
+        expect(res.body.shortDescription).toBe('Corto con espacios');
+        expect(res.body.longDescription).toBe('Largo con detalles');
+    });
+
+    it('el GET posterior devuelve las descripciones que se guardaron', async () => {
+        const created = await adminAgent.post('/api/products').send({
+            name: `RoundTrip ${suffix}`, sku: `RTP${suffix}`, price: 100, stock: 1,
+            shortDescription: 'Corto', longDescription: 'Largo'
+        });
+
+        const single = await adminAgent.get(`/api/products/${created.body.id}`);
+        expect(single.body.shortDescription).toBe('Corto');
+        expect(single.body.longDescription).toBe('Largo');
+    });
+
+    it('sin descripciones quedan en string vacío, no en null ni undefined', async () => {
+        const res = await adminAgent.post('/api/products').send({
+            name: `SinTextos ${suffix}`, sku: `STX${suffix}`, price: 100, stock: 1
+        });
+
+        expect(res.body.shortDescription).toBe('');
+        expect(res.body.longDescription).toBe('');
+    });
+
+    it('el PUT actualiza shortDescription, longDescription e isFeatured', async () => {
+        const created = await adminAgent.post('/api/products').send({
+            name: `UpdTextos ${suffix}`, sku: `UTX${suffix}`, price: 100, stock: 1
+        });
+
+        const res = await adminAgent.put(`/api/products/${created.body.id}`).send({
+            shortDescription: 'Nuevo corto',
+            longDescription: 'Nuevo largo',
+            isFeatured: true
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.shortDescription).toBe('Nuevo corto');
+        expect(res.body.longDescription).toBe('Nuevo largo');
+        expect(res.body.isFeatured).toBe(true);
+    });
+
+    it('el PUT asigna y luego limpia el discountId', async () => {
+        const disc = await adminAgent.post('/api/discounts').send({ name: `PU ${suffix}`, type: 'percent', value: 10 });
+        const created = await adminAgent.post('/api/products').send({
+            name: `UpdDesc ${suffix}`, sku: `UDC${suffix}`, price: 100, stock: 1
+        });
+
+        const withDisc = await adminAgent.put(`/api/products/${created.body.id}`)
+            .send({ discountId: disc.body.id });
+        expect(withDisc.status).toBe(200);
+        expect(withDisc.body.discount.id).toBe(disc.body.id);
+
+        const cleared = await adminAgent.put(`/api/products/${created.body.id}`)
+            .send({ discountId: null });
+        expect(cleared.status).toBe(200);
+        expect(cleared.body.discount).toBeNull();
+    });
+
+    it('isNew es calculado a partir de newUntil, y mandarlo no hace nada', async () => {
+        // isNew no es un campo de entrada: la API lo deriva de newUntil.
+        const future = await adminAgent.post('/api/products').send({
+            name: `Nuevo Calc ${suffix}`, sku: `NC1${suffix}`, price: 100, stock: 1,
+            newUntil: '2030-12-31T00:00:00.000Z'
+        });
+        expect(future.body.isNew).toBe(true);
+
+        // Hay newUntil, pero ya venció: isNew es false igual
+        const past = await adminAgent.post('/api/products').send({
+            name: `Viejo Calc ${suffix}`, sku: `VC1${suffix}`, price: 100, stock: 1,
+            newUntil: '2000-01-01T00:00:00.000Z'
+        });
+        expect(past.body.isNew).toBe(false);
+
+        // Mandar isNew:true sin newUntil no marca nada
+        const ignored = await adminAgent.post('/api/products').send({
+            name: `Ignorado ${suffix}`, sku: `IGN${suffix}`, price: 100, stock: 1,
+            isNew: true
+        });
+        expect(ignored.status).toBe(201);
+        expect(ignored.body.isNew).toBe(false);
+    });
+
+    it('un producto con isFeatured aparece en /api/products/featured', async () => {
+        const res = await adminAgent.post('/api/products').send({
+            name: `Feat ${suffix}`, sku: `FEA${suffix}`, price: 100, stock: 1,
+            isFeatured: true, isEnabled: true
+        });
+
+        const list = await request(app).get('/api/products/featured');
+        expect(list.status).toBe(200);
+        expect(list.body.some(p => p.id === res.body.id)).toBe(true);
+    });
+
+    it('las imágenes se guardan y se devuelven en el create', async () => {
+        const res = await adminAgent.post('/api/products').send({
+            name: `ConImg ${suffix}`, sku: `CIM${suffix}`, price: 100, stock: 1,
+            images: ['https://example.com/a.jpg', 'https://example.com/b.jpg']
+        });
+
+        expect(res.status).toBe(201);
+        expect(res.body.images).toEqual(['https://example.com/a.jpg', 'https://example.com/b.jpg']);
+    });
+
+    // Documenta el comportamiento actual: la API ignora claves desconocidas en
+    // vez de rechazarlas. Si alguna vez se agrega validación estricta, este test
+    // tiene que cambiar de 201 a 400.
+    it('descarta en silencio los campos con nombre equivocado', async () => {
+        const res = await adminAgent.post('/api/products').send({
+            name: `Malos ${suffix}`, sku: `MAL${suffix}`, price: 100, stock: 1,
+            description: 'esto no se guarda', featured: true
+        });
+
+        expect(res.status).toBe(201);
+        expect(res.body.shortDescription).toBe('');
+        expect(res.body.isFeatured).toBe(false);
+    });
 });
