@@ -25,9 +25,10 @@ Inquiry.init({
         allowNull: false
     },
     source: {
-        type: DataTypes.ENUM('contact', 'product'),
+        type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: 'contact'
+        defaultValue: 'contact',
+        validate: { isIn: [['contact', 'product']] }
     },
     productId: {
         type: DataTypes.INTEGER,
@@ -56,9 +57,10 @@ Inquiry.init({
         allowNull: true
     },
     status: {
-        type: DataTypes.ENUM('pending', 'read', 'replied'),
+        type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: 'pending'
+        defaultValue: 'pending',
+        validate: { isIn: [['pending', 'read', 'replied']] }
     },
     notified: {
         type: DataTypes.BOOLEAN,

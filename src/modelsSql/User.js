@@ -16,9 +16,10 @@ User.init({
         allowNull: false
     },
     role: {
-        type: DataTypes.ENUM('admin', 'user'),
+        type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: 'user'
+        defaultValue: 'user',
+        validate: { isIn: [['admin', 'user']] }
     }
 }, {
     sequelize,

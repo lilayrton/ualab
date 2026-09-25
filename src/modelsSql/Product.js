@@ -14,9 +14,19 @@ Product.init({
         unique: true
     },
     images: {
-        type: DataTypes.JSON,
+        type: DataTypes.TEXT,
         allowNull: false,
-        defaultValue: []
+        defaultValue: '[]',
+        get() {
+            try {
+                return JSON.parse(this.getDataValue('images') || '[]');
+            } catch {
+                return [];
+            }
+        },
+        set(value) {
+            this.setDataValue('images', JSON.stringify(value ?? []));
+        }
     },
     shortDescription: {
         type: DataTypes.TEXT,

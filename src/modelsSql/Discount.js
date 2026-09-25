@@ -9,8 +9,9 @@ Discount.init({
         allowNull: false
     },
     type: {
-        type: DataTypes.ENUM('amount', 'percent'),
-        allowNull: false
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: { isIn: [['amount', 'percent']] }
     },
     value: {
         type: DataTypes.DECIMAL(10, 2),
