@@ -6,6 +6,7 @@ import {
     updateUser,
     deleteUser
 } from '../controllers/userController.js';
+import { getUserProfile, createUserProfile, updateUserProfile } from '../controllers/profileController.js';
 import { protect, requireAdmin } from '../middlewares/auth.js';
 
 const router = Router();
@@ -21,5 +22,12 @@ router.get('/:id', getUserById);
 router.post('/', createUser);
 router.put('/:id', updateUser);
 router.delete('/:id', deleteUser);
+
+// Perfil de otro usuario. Estas cuelgan del mismo router, así que heredan el
+// protect + requireAdmin de arriba. El path tiene dos segmentos, así que no
+// chocan con /:id.
+router.get('/:id/profile', getUserProfile);
+router.post('/:id/profile', createUserProfile);
+router.put('/:id/profile', updateUserProfile);
 
 export default router;

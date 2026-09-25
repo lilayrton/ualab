@@ -29,6 +29,86 @@ describe('Categorías', () => {
         expect(dup.status).toBe(400);
     });
 
+    // Regresión: sortOrder se leía de parseNumber(...).value, pero parseNumber
+    // devuelve { number }. El valor se perdía y el defaultValue del modelo (0)
+    // lo sobreescribía en silencio, así que cualquier sortOrder daba 0.
+    it('guarda el sortOrder enviado al crear', async () => {
+        const create = await adminAgent.post('/api/categories')
+            .send({ name: `Orden ${suffix}`, sortOrder: 42 });
+
+        expect(create.status).toBe(201);
+        expect(create.body.sortOrder).toBe(42);
+    });
+
+    it('acepta sortOrder 0 explícito (no lo confunde con ausente)', async () => {
+        const create = await adminAgent.post('/api/categories')
+            .send({ name: `Orden Cero ${suffix}`, sortOrder: 0 });
+
+        expect(create.status).toBe(201);
+        expect(create.body.sortOrder).toBe(0);
+    });
+
+    it('sin sortOrder el default es 0', async () => {
+        const create = await adminAgent.post('/api/categories').send({ name: `Sin Orden ${suffix}` });
+
+        expect(create.status).toBe(201);
+        expect(create.body.sortOrder).toBe(0);
+    });
+
+    it('rechaza un sortOrder no numérico con 400', async () => {
+        const create = await adminAgent.post('/api/categories')
+            .send({ name: `Orden Mal ${suffix}`, sortOrder: 'abc' });
+
+        expect(create.status).toBe(400);
+    });
+
+    it('el PUT actualiza el sortOrder', async () => {
+        const create = await adminAgent.post('/api/categories')
+            .send({ name: `Orden PUT ${suffix}`, sortOrder: 1 });
+
+        const update = await adminAgent.put(`/api/categories/${create.body.id}`)
+            .send({ sortOrder: 99 });
+
+        expect(update.status).toBe(200);
+        expect(update.body.sortOrder).toBe(99);
+    });
+
+    it('ordena el listado por sortOrder ascendente y luego por nombre', async () => {
+        // Tres con sortOrder explícito y nombres en orden alfabético inverso,
+        // para que un orden por nombre no pueda pasar el test por casualidad.
+        const b = await adminAgent.post('/api/categories')
+            .send({ name: `Zeta ${suffix}`, sortOrder: 3 });
+        const a = await adminAgent.post('/api/categories')
+            .send({ name: `Alfa ${suffix}`, sortOrder: 1 });
+        const c = await adminAgent.post('/api/categories')
+            .send({ name: `Mid ${suffix}`, sortOrder: 2 });
+
+        const list = await adminAgent.get('/api/categories');
+        expect(list.status).toBe(200);
+
+        const positions = [a.body.id, c.body.id, b.body.id]
+            .map(id => list.body.findIndex(cat => cat.id === id));
+
+        expect(positions).toEqual([...positions].sort((x, y) => x - y));
+
+        // Y el árbol respeta el mismo orden
+        const tree = await adminAgent.get('/api/categories/tree');
+        const treeOrder = [];
+        for (const node of tree.body) {
+            if ([a.body.id, c.body.id, b.body.id].includes(node.id)) {
+                treeOrder.push(node.id);
+            }
+            for (const child of node.children || []) {
+                if ([a.body.id, c.body.id, b.body.id].includes(child.id)) {
+                    treeOrder.push(child.id);
+                }
+            }
+        }
+        if (treeOrder.length === 3) {
+            expect(treeOrder).toEqual([a.body.id, c.body.id, b.body.id]);
+        }
+    });
+
     it('admin lista y obtiene detalle', async () => {
         const list = await adminAgent.get('/api/categories');
         expect(list.status).toBe(200);

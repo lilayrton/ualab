@@ -67,7 +67,7 @@ export async function createCategory(req, res) {
         return res.status(400).json({ message: enabledResult.error });
     }
 
-    const sortResult = sortOrder === undefined ? { value: 0 } : parseNumber(sortOrder, 'El campo sortOrder');
+    const sortResult = sortOrder === undefined ? { number: 0 } : parseNumber(sortOrder, 'El campo sortOrder');
     if (sortResult.error) {
         return res.status(400).json({ message: sortResult.error });
     }
@@ -77,7 +77,7 @@ export async function createCategory(req, res) {
         description: description?.trim() ?? '',
         slug: finalSlug,
         isEnabled: enabledResult.value,
-        sortOrder: sortResult.value,
+        sortOrder: sortResult.number,
         parentId: parentId ?? null
     });
 
@@ -128,7 +128,7 @@ export async function updateCategory(req, res) {
             return res.status(400).json({ message: sortResult.error });
         }
 
-        data.sortOrder = sortResult.value;
+        data.sortOrder = sortResult.number;
     }
 
     if (slug !== undefined) {
