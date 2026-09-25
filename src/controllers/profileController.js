@@ -1,4 +1,16 @@
 import { getProfileRepository } from '../repositories/ProfileRepository.js';
+import { parseBoolean } from '../utils/validators.js';
+
+// Normaliza isCompany: acepta booleano o string ("true"/"false"/"1"/"0").
+// Sin esto, un body form-urlencoded manda "false" (string) que es truthy en JS
+// y el perfil se validaba como empresa. Si no viene, se assume persona.
+function resolveIsCompany(raw) {
+    if (raw === undefined || raw === null || raw === '') {
+        return { value: false };
+    }
+
+    return parseBoolean(raw, 'El campo isCompany');
+}
 
 // GET /api/profile - se obtiene el perfil autenticado
 export async function getProfile(req, res) {
@@ -10,10 +22,16 @@ export async function getProfile(req, res) {
 
     res.json(profile);
 }
-
 // POST /api/profile - se crea el perfil
 export async function createProfile(req, res) {
-    const { firstName, lastName, phone, isCompany, dni, cuit, companyName } = req.body;
+    const { firstName, lastName, phone, dni, cuit, companyName } = req.body;
+
+    const companyResult = resolveIsCompany(req.body.isCompany);
+    if (companyResult.error) {
+        return res.status(400).json({ message: companyResult.error });
+    }
+    const isCompany = companyResult.value;
+
     const profileRepo = getProfileRepository();
 
     const exists = await profileRepo.getByUserId(req.user.id);
@@ -21,7 +39,7 @@ export async function createProfile(req, res) {
         return res.status(409).json({ message: 'Ya existe un perfil para este usuario' });
     }
 
-    const validationError = checkRequiredFields(req.body);
+    const validationError = checkRequiredFields({ isCompany, dni, cuit, companyName });
     if (validationError) {
         return res.status(400).json({ message: validationError });
     }
@@ -36,9 +54,15 @@ export async function createProfile(req, res) {
 
 // PUT /api/profile - actualizar perfil
 export async function updateProfile(req, res) {
-    const { firstName, lastName, phone, isCompany, dni, cuit, companyName } = req.body;
+    const { firstName, lastName, phone, dni, cuit, companyName } = req.body;
 
-    const validationError = checkRequiredFields(req.body);
+    const companyResult = resolveIsCompany(req.body.isCompany);
+    if (companyResult.error) {
+        return res.status(400).json({ message: companyResult.error });
+    }
+    const isCompany = companyResult.value;
+
+    const validationError = checkRequiredFields({ isCompany, dni, cuit, companyName });
     if (validationError) {
         return res.status(400).json({ message: validationError });
     }
