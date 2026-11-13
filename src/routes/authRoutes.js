@@ -3,6 +3,7 @@ import {
     register,
     login,
     logout,
+    getMe,
     forgotPassword,
     resetPassword,
     changePassword
@@ -25,6 +26,7 @@ const authLimiter = rateLimit({
 router.post('/register', authLimiter, register);
 router.post('/login', authLimiter, login);
 router.post('/logout', logout);
+router.get('/me', protect, getMe);
 router.post('/forgot-password', authLimiter, forgotPassword);
 router.post('/reset-password', authLimiter, resetPassword);
 // Protegido: el cambio de contraseña exige sesión y también limita intentos (anti fuerza bruta)

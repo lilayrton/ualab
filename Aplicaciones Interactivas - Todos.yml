@@ -1,0 +1,1084 @@
+opencollection: 1.0.0
+info:
+  name: Aplicaciones Interactivas
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ''
+      port: ''
+      auth:
+        username: ''
+        password: ''
+      bypassProxy: ''
+items:
+  - info:
+      name: 01 - Autenticación
+      type: folder
+      seq: 1
+    request:
+      auth: inherit
+    items:
+      - info:
+          name: Registro
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: http://localhost:33000/api/auth/register
+          body:
+            type: json
+            data: |-
+              {
+                "email": "lencinadariojavier@gmail.com",
+                "password": "dario1122"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Login
+          type: http
+          seq: 2
+        http:
+          method: POST
+          url: http://localhost:33000/api/auth/login
+          body:
+            type: json
+            data: |-
+              {
+                "email": "lencinadariojavier@gmail.com",
+                "password": "dario1122"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Logout
+          type: http
+          seq: 3
+        http:
+          method: POST
+          url: http://localhost:33000/api/auth/logout
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Olvidé mi contraseña
+          type: http
+          seq: 4
+        http:
+          method: POST
+          url: http://localhost:33000/api/auth/forgot-password
+          body:
+            type: json
+            data: |-
+              {
+                "email": "lencinadariojavier@gmail.com"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Resetear contraseña
+          type: http
+          seq: 5
+        http:
+          method: POST
+          url: http://localhost:33000/api/auth/reset-password
+          body:
+            type: json
+            data: |-
+              {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicHVycG9zZSI6InJlc2V0IiwiaWF0IjoxNzkwMzQ0NTIwLCJleHAiOjE3OTAzNDgxMjB9.6O3n3PbZwZfHhrJQ5Z_U9KeWs1UIDUnXw2JlJgPlhXw",
+                "newPassword": "dario123"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Cambiar contraseña
+          type: http
+          seq: 6
+        http:
+          method: POST
+          url: http://localhost:33000/api/auth/change-password
+          body:
+            type: json
+            data: |-
+              {
+                "currentPassword": "dario123",
+                "newPassword": "dario1122"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+  - info:
+      name: health
+      type: http
+      seq: 2
+    http:
+      method: GET
+      url: http://localhost:33000/health
+      auth: inherit
+    settings:
+      encodeUrl: true
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+      forwardAuthorizationHeader: false
+  - info:
+      name: 02 - Usuarios
+      type: folder
+      seq: 3
+    request:
+      auth: inherit
+    items:
+      - info:
+          name: Crear usuario
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: http://localhost:33000/api/users
+          body:
+            type: json
+            data: |-
+              {
+                "email": "juanperez@gmail.com",
+                "password": "juan123",
+                "role": "user"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar usuarios
+          type: http
+          seq: 2
+        http:
+          method: GET
+          url: http://localhost:33000/api/users
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Obtener usuario por ID
+          type: http
+          seq: 3
+        http:
+          method: GET
+          url: http://localhost:33000/api/users/1
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Actualizar usuario
+          type: http
+          seq: 4
+        http:
+          method: PUT
+          url: http://localhost:33000/api/users/2
+          body:
+            type: json
+            data: |-
+              {
+                "password": "juan123"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Eliminar usuario
+          type: http
+          seq: 5
+        http:
+          method: DELETE
+          url: http://localhost:33000/api/users/3
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+  - info:
+      name: 03 - Perfiles
+      type: folder
+      seq: 4
+    request:
+      auth: inherit
+    items:
+      - info:
+          name: Crear perfil
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: http://localhost:33000/api/profile
+          body:
+            type: json
+            data: |-
+              {
+                "firstName": "Dario",
+                "lastName": "Javier",
+                "phone": "1133557788",
+                "isCompany": false,
+                "dni": "35888999"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Actualizar perfil
+          type: http
+          seq: 2
+        http:
+          method: PUT
+          url: http://localhost:33000/api/profile
+          body:
+            type: json
+            data: |-
+              {
+                "firstName": "Dario",
+                "lastName": "Javier",
+                "phone": "1133557788",
+                "isCompany": false,
+                "dni": "35888999"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Obtener perfil actual
+          type: http
+          seq: 3
+        http:
+          method: GET
+          url: http://localhost:33000/api/profile
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Obtener perfil de otro usuario
+          type: http
+          seq: 5
+        http:
+          method: GET
+          url: http://localhost:33000/api/users/2/profile
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Actualizar perfil de otro usuario
+          type: http
+          seq: 6
+        http:
+          method: PUT
+          url: http://localhost:33000/api/users/2/profile
+          body:
+            type: json
+            data: |-
+              {
+                "firstName": "Juan",
+                "lastName": "Pérez",
+                "phone": "1122112211",
+                "isCompany": false,
+                "dni": "30303030"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Crear perfil de otro usuario
+          type: http
+          seq: 4
+        http:
+          method: POST
+          url: http://localhost:33000/api/users/2/profile
+          body:
+            type: json
+            data: |-
+              {
+                "firstName": "Juan",
+                "lastName": "Pérez",
+                "phone": "1122112211",
+                "isCompany": false,
+                "dni": "30303030"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+  - info:
+      name: 04 - Categorías
+      type: folder
+      seq: 5
+    request:
+      auth: inherit
+    items:
+      - info:
+          name: Crear categoría
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: http://localhost:33000/api/categories
+          body:
+            type: json
+            data: |-
+              {
+                "name": "Equipos",
+                "description": "Sección de equipos para laboratorio",
+                "isEnabled": true,
+                "sortOrder": 1
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Borrar categoría
+          type: http
+          seq: 2
+        http:
+          method: DELETE
+          url: http://localhost:33000/api/categories/11
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Actualizar categoría
+          type: http
+          seq: 3
+        http:
+          method: PUT
+          url: http://localhost:33000/api/categories/1
+          body:
+            type: json
+            data: |-
+              {
+                "name": "Equipos",
+                "description": "Sección de equipos para laboratorio",
+                "isEnabled": true,
+                "sortOrder": 1
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar categorías públicas
+          type: http
+          seq: 4
+        http:
+          method: GET
+          url: http://localhost:33000/api/categories/public
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar categorías admin
+          type: http
+          seq: 5
+        http:
+          method: GET
+          url: http://localhost:33000/api/categories
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Obtener categoría por ID
+          type: http
+          seq: 6
+        http:
+          method: GET
+          url: http://localhost:33000/api/categories/1
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Árbol de categorías
+          type: http
+          seq: 7
+        http:
+          method: GET
+          url: http://localhost:33000/api/categories/tree
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+  - info:
+      name: 05 - Descuentos
+      type: folder
+      seq: 6
+    request:
+      auth: inherit
+    items:
+      - info:
+          name: Crear descuento
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: http://localhost:33000/api/discounts
+          body:
+            type: json
+            data: |-
+              {
+                "name": "CyberMonday",
+                "type": "percent",
+                "value": 15,
+                "isEnabled": true,
+                "validFrom": "2026-01-01T00:00:00.000Z",
+                "validTo": "2026-12-31T23:59:59.000Z"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Borrar descuento
+          type: http
+          seq: 2
+        http:
+          method: DELETE
+          url: http://localhost:33000/api/discounts/3
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Actualizar descuento
+          type: http
+          seq: 3
+        http:
+          method: PUT
+          url: http://localhost:33000/api/discounts/1
+          body:
+            type: json
+            data: |-
+              {
+                "name": "CyberMonday",
+                "type": "percent",
+                "value": 15,
+                "isEnabled": true,
+                "validFrom": "2026-01-01T00:00:00.000Z",
+                "validTo": "2026-12-31T23:59:59.000Z"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar descuentos públicos
+          type: http
+          seq: 4
+        http:
+          method: GET
+          url: http://localhost:33000/api/discounts/public
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar descuentos admin
+          type: http
+          seq: 5
+        http:
+          method: GET
+          url: http://localhost:33000/api/discounts
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Obtener descuento por ID
+          type: http
+          seq: 6
+        http:
+          method: GET
+          url: http://localhost:33000/api/discounts/1
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+  - info:
+      name: 07 - Información de la tienda
+      type: folder
+      seq: 8
+    request:
+      auth: inherit
+    items:
+      - info:
+          name: Obtener información
+          type: http
+          seq: 1
+        http:
+          method: GET
+          url: http://localhost:33000/api/store-info
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Actualizar información
+          type: http
+          seq: 2
+        http:
+          method: PUT
+          url: http://localhost:33000/api/store-info
+          body:
+            type: json
+            data: |-
+              {
+                "id": "1",
+                "name": "UALab",
+                "description": "Sitio de insumos de laboratorio. Grupo 10. Aplicaciones Interactivas",
+                "address": "Lima 757, Ciudad Autónoma de Buenos Aires",
+                "phone": "0800-122-8233",
+                "email": "contacto@uade.edu.ar",
+                "whatsapp": "+54 9 11 7662-5199",
+                "logo": "",
+                "hours": "Lunes a Viernes de 9:00 a 20:00",
+                "social": {
+                  "facebook": "https://www.facebook.com/UADEOficial",
+                  "instagram": "https://www.instagram.com/uadeoficial",
+                  "twitter": "https://x.com/UADEoficial",
+                  "linkedin": "https://www.linkedin.com/school/uade/"
+                }
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Subir logo
+          type: http
+          seq: 3
+        http:
+          method: POST
+          url: http://localhost:33000/api/store-info/logo
+          body:
+            type: multipart-form
+            data:
+              - name: logo
+                type: file
+                value:
+                  - C:\Users\dario\Desktop\logo.png
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+  - info:
+      name: 08 - Consultas
+      type: folder
+      seq: 9
+    request:
+      auth: inherit
+    items:
+      - info:
+          name: Crear consulta
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: http://localhost:33000/api/inquiries
+          body:
+            type: json
+            data: |-
+              {
+                "name": "Laura Gomez",
+                "email": "laura.gomez@gmail.com",
+                "phone": "011-5555-4444",
+                "subject": "Consulta sobre stock",
+                "message": "Hola, tienen disponible micropipetas de 100 microlitros?"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Eliminar consulta
+          type: http
+          seq: 2
+        http:
+          method: DELETE
+          url: http://localhost:33000/api/inquiries/2
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Actualizar estado consulta
+          type: http
+          seq: 3
+        http:
+          method: PATCH
+          url: http://localhost:33000/api/inquiries/1/status
+          body:
+            type: json
+            data: |-
+              {
+                "status": "read"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar consultas
+          type: http
+          seq: 4
+        http:
+          method: GET
+          url: http://localhost:33000/api/inquiries?status=read&page=1&limit=20
+          params:
+            - name: status
+              value: read
+              type: query
+            - name: page
+              value: '1'
+              type: query
+            - name: limit
+              value: '20'
+              type: query
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Obtener consulta
+          type: http
+          seq: 5
+        http:
+          method: GET
+          url: http://localhost:33000/api/inquiries/1
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Estadísticas consultas
+          type: http
+          seq: 6
+        http:
+          method: GET
+          url: http://localhost:33000/api/inquiries/stats
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+  - info:
+      name: 06 - Productos
+      type: folder
+      seq: 7
+    request:
+      auth: inherit
+    items:
+      - info:
+          name: Crear producto sin variantes
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: http://localhost:33000/api/products
+          body:
+            type: json
+            data: |-
+              {
+                "name": "Vortex MX-S DLab de velocidad variable y modo touch",
+                "sku": "MX-S",
+                "shortDescription": "El mezclador Vortex ampliamente utilizado en ciencias de la vida, campos de análisis físicos y químicos, para la vigorosa resuspensión de las células o glóbulos químicas en tubos de hasta 15 ml.",
+                "longDescription": "Los agitadores vortex son instrumentos ideales para mezclar muestras, resuspender células, componentes líquidos biológicos y/o químicos en diferentes tipos de tubos utilizando un mecanismo de agitación tipo vortex. Son ampliamente utilizados en las ciencias de la vida, en laboratorios de análisis físico-químico, laboratorios de biología, en la industria, la clínica, prácticamente cualquier laboratorio debe contar con un agitador vortex.",
+                "price": 223,
+                "stock": 10,
+                "images": [],
+                "isEnabled": true,
+                "isFeatured": true,
+                "newUntil": "2030-12-31",
+                "categories": [
+                  2
+                ],
+                "discountId": 1
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Eliminar producto
+          type: http
+          seq: 3
+        http:
+          method: DELETE
+          url: http://localhost:33000/api/products/14
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Crear producto con variantes
+          type: http
+          seq: 2
+        http:
+          method: POST
+          url: http://localhost:33000/api/products
+          body:
+            type: json
+            data: |-
+              {
+                "name": "Bureta digital Sartorius Biotrate",
+                "sku": "LH-723080",
+                "shortDescription": "Biotrate de Sartorius es una bureta digital de alta calidad equipada con sofisticadas funciones para una fácil valoración.",
+                "longDescription": "Biotrate ofrece una alta resistencia química y es una solución inteligente para la valoración exacta y segura de diversos líquidos. Biotrate es fácil y cómoda de utilizar debido a su pantalla electrónica grande y clara, suaves mandos de manejo, y cabezal dispensador con giro de 360°. No incluye frasco/ botella.",
+                "price": 1600,
+                "stock": 10,
+                "images": [],
+                "isEnabled": true,
+                "isFeatured": true,
+                "newUntil": null,
+                "categories": [6],
+                "discountId": 2,
+                "variants": [
+                  {
+                    "name": "0-10 ml",
+                    "sku": "LH-723080-10",
+                    "price": 1600,
+                    "stock": 5
+                  },
+                  {
+                    "name": "0-20 ml",
+                    "sku": "LH-723080-20",
+                    "price": 1600,
+                    "stock": 5
+                  },
+                  {
+                    "name": "0-50 ml",
+                    "sku": "LH-723080-50",
+                    "price": 1600,
+                    "stock": 5
+                  }
+                ]
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Actualizar producto
+          type: http
+          seq: 4
+        http:
+          method: PUT
+          url: http://localhost:33000/api/products/6
+          body:
+            type: json
+            data: |-
+              {
+                "name": "Vortex MX-S DLab de velocidad variable y modo touch",
+                "sku": "MX-S",
+                "shortDescription": "El mezclador Vortex ampliamente utilizado en ciencias de la vida, campos de análisis físicos y químicos, para la vigorosa resuspensión de las células o glóbulos químicas en tubos de hasta 15 ml.",
+                "longDescription": "Los agitadores vortex son instrumentos ideales para mezclar muestras, resuspender células, componentes líquidos biológicos y/o químicos en diferentes tipos de tubos utilizando un mecanismo de agitación tipo vortex. Son ampliamente utilizados en las ciencias de la vida, en laboratorios de análisis físico-químico, laboratorios de biología, en la industria, la clínica, prácticamente cualquier laboratorio debe contar con un agitador vortex.",
+                "price": 223,
+                "stock": 10,
+                "images": [],
+                "isEnabled": true,
+                "isFeatured": true,
+                "newUntil": "2030-12-31",
+                "categories": [
+                  2
+                ],
+                "discountId": 1
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar productos públicos
+          type: http
+          seq: 5
+        http:
+          method: GET
+          url: http://localhost:33000/api/products/public
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar productos admin
+          type: http
+          seq: 6
+        http:
+          method: GET
+          url: http://localhost:33000/api/products
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar productos nuevos
+          type: http
+          seq: 7
+        http:
+          method: GET
+          url: http://localhost:33000/api/products/new
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Listar productos destacados
+          type: http
+          seq: 8
+        http:
+          method: GET
+          url: http://localhost:33000/api/products/featured
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Obtener producto por ID
+          type: http
+          seq: 9
+        http:
+          method: GET
+          url: http://localhost:33000/api/products/6
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Buscar productos
+          type: http
+          seq: 10
+        http:
+          method: GET
+          url: http://localhost:33000/api/products/search?q=pipeta&sort=priceLow&minPrice=10&maxPrice=2000&page=1&limit=10
+          params:
+            - name: q
+              value: pipeta
+              type: query
+            - name: sort
+              value: priceLow
+              type: query
+            - name: minPrice
+              value: '10'
+              type: query
+            - name: maxPrice
+              value: '2000'
+              type: query
+            - name: page
+              value: '1'
+              type: query
+            - name: limit
+              value: '10'
+              type: query
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+      - info:
+          name: Buscar productos admin
+          type: http
+          seq: 11
+        http:
+          method: GET
+          url: http://localhost:33000/api/products/search/all?q=pipeta&sort=priceLow&page=1&limit=10
+          params:
+            - name: q
+              value: pipeta
+              type: query
+            - name: sort
+              value: priceLow
+              type: query
+            - name: page
+              value: '1'
+              type: query
+            - name: limit
+              value: '10'
+              type: query
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+          forwardAuthorizationHeader: false
+bundled: true
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+    presets:
+      requestType: http
+      requestUrl: http://localhost:33000
+    exportedAt: '2026-09-25T19:55:12.038Z'
+    exportedUsing: Bruno

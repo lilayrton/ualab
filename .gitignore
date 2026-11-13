@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Imágenes subidas
 img/
+uploads/
+dist/
+frontend/dist/
+env
+*.bak
+

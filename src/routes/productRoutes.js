@@ -20,12 +20,12 @@ router.get('/public', getPublicProducts);
 router.get('/featured', getFeaturedProducts);
 router.get('/new', getNewProducts);
 router.get('/search', searchProducts);
+router.get('/:id', getProduct);
 
 // Con token
 router.use(protect, requireAdmin);
 router.get('/search/all', searchAdminProducts);
 router.get('/', getProducts);
-router.get('/:id', getProduct);
 router.post('/', createProduct);
 router.put('/:id', updateProduct);
 router.delete('/:id', deleteProduct);
