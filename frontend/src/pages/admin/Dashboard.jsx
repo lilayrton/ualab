@@ -99,89 +99,91 @@ export default function Dashboard() {
       </div>
 
       {/* Tarjetas de Métricas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Insumos y Equipos
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Productos
             </span>
-            <span className="text-3xl font-black text-slate-900 mt-1 block">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 block tabular-nums">
               {loading ? '...' : stats.productsCount}
             </span>
-            <span className="text-[11px] text-teal-700 font-semibold mt-1 block">
-              Catálogo activo (&ge; 20 req.)
+            <span className="text-[11px] text-teal-700 font-medium mt-1 block truncate">
+              Activos en catálogo
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center">
-            <Package className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+            <Package className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Especialidades
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Categorías
             </span>
-            <span className="text-3xl font-black text-slate-900 mt-1 block">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 block tabular-nums">
               {loading ? '...' : stats.categoriesCount}
             </span>
-            <span className="text-[11px] text-emerald-600 font-semibold mt-1 block">
-              Árbol jerárquico
+            <span className="text-[11px] text-emerald-600 font-medium mt-1 block truncate">
+              Líneas y rubros
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-            <FolderTree className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
+            <FolderTree className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Cotizaciones Pendientes
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Pendientes
             </span>
-            <span className="text-3xl font-black text-amber-600 mt-1 block">
+            <span className="text-2xl sm:text-3xl font-black text-amber-600 mt-1 block tabular-nums">
               {loading ? '...' : stats.inquiries.pending ?? stats.inquiries.pendiente ?? 0}
             </span>
-            <span className="text-[11px] text-slate-500 mt-1 block">
-              Sin responder aún
+            <span className="text-[11px] text-slate-500 mt-1 block truncate">
+              Sin responder
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <Clock className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Consultas Totales
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Consultas
             </span>
-            <span className="text-3xl font-black text-slate-900 mt-1 block">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 block tabular-nums">
               {loading ? '...' : stats.inquiries.total ?? 0}
             </span>
-            <span className="text-[11px] text-teal-600 font-semibold mt-1 block">
+            <span className="text-[11px] text-teal-600 font-medium mt-1 block truncate">
               {stats.inquiries.replied ?? stats.inquiries.respondida ?? 0} respondidas
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <Mail className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
       </div>
 
       {/* Consultas Recientes & Accesos Rápidos */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 sm:p-8 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Últimas Solicitudes y Consultas</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Pedidos de cotización recibidos desde laboratorios y farmacias
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-5">
+          <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                Últimas Solicitudes y Consultas
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Pedidos de cotización de laboratorios y farmacias
               </p>
             </div>
             <Link
               to="/admin/consultas"
-              className="text-xs font-bold text-teal-700 hover:text-teal-900 inline-flex items-center gap-1"
+              className="text-xs font-bold text-teal-700 hover:text-teal-900 inline-flex items-center gap-1 shrink-0 whitespace-nowrap pt-0.5"
             >
               <span>Ver bandeja</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -191,30 +193,35 @@ export default function Dashboard() {
           {recentInquiries.length > 0 ? (
             <div className="divide-y divide-slate-100">
               {recentInquiries.map((inq) => (
-                <div
-                  key={inq.id}
-                  className="py-4 first:pt-0 last:pb-0 flex items-start justify-between gap-4"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-slate-800">{inq.name}</span>
-                      <span className="text-xs text-slate-400 font-mono">({inq.email})</span>
+                <div key={inq.id} className="py-4 first:pt-0 last:pb-0 space-y-1.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-slate-900 leading-snug">
+                        {inq.name}
+                      </p>
+                      <p className="text-xs text-slate-400 font-mono truncate">
+                        {inq.email}
+                      </p>
                     </div>
-                    <p className="text-xs font-semibold text-slate-700">{inq.subject}</p>
-                    <p className="text-xs text-slate-500 line-clamp-1">{inq.message}</p>
+                    <span
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase shrink-0 ${
+                        inq.status === 'pending'
+                          ? 'bg-amber-100 text-amber-800'
+                          : inq.status === 'replied'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-sky-100 text-sky-800'
+                      }`}
+                    >
+                      {STATUS_LABELS[inq.status] || inq.status || 'Pendiente'}
+                    </span>
                   </div>
 
-                  <span
-                    className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase shrink-0 ${
-                      inq.status === 'pending'
-                        ? 'bg-amber-100 text-amber-800'
-                        : inq.status === 'replied'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-sky-100 text-sky-800'
-                    }`}
-                  >
-                    {STATUS_LABELS[inq.status] || inq.status || 'Pendiente'}
-                  </span>
+                  <p className="text-xs font-semibold text-slate-700 leading-snug">
+                    {inq.subject}
+                  </p>
+                  <p className="text-xs text-slate-500 line-clamp-2 sm:line-clamp-1">
+                    {inq.message}
+                  </p>
                 </div>
               ))}
             </div>
@@ -226,8 +233,8 @@ export default function Dashboard() {
         </div>
 
         {/* Acciones Rápidas */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 sm:p-8 space-y-4">
-          <h2 className="text-lg font-bold text-slate-900">Gestión de Laboratorio</h2>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900">Gestión de Laboratorio</h2>
           <p className="text-xs text-slate-400">Accesos directos a los módulos de administración</p>
 
           <div className="space-y-2.5 pt-2">

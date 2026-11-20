@@ -12,6 +12,11 @@ const categorySchema = new mongoose.Schema(
             trim: true,
             default: ''
         },
+        image: {
+            type: String,
+            trim: true,
+            default: ''
+        },
         slug: {
             type: String,
             required: [true, 'El slug es obligatorio'],

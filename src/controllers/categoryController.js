@@ -42,7 +42,7 @@ export async function getCategory(req, res) {
 export async function createCategory(req, res) {
     const categoryRepo = getCategoryRepository();
 
-    const { name, description, slug, isEnabled, sortOrder, parentId } = req.body;
+    const { name, description, image, slug, isEnabled, sortOrder, parentId } = req.body;
 
     if (typeof name !== 'string' || !name.trim()) {
         return res.status(400).json({ message: 'El nombre de la categoría es obligatorio' });
@@ -75,6 +75,7 @@ export async function createCategory(req, res) {
     const category = await categoryRepo.create({
         name: name.trim(),
         description: description?.trim() ?? '',
+        image: typeof image === 'string' ? image.trim() : '',
         slug: finalSlug,
         isEnabled: enabledResult.value,
         sortOrder: sortResult.number,
@@ -98,7 +99,7 @@ export async function updateCategory(req, res) {
         return res.status(404).json({ message: 'Categoría no encontrada' });
     }
 
-    const { name, description, slug, isEnabled, sortOrder, parentId } = req.body;
+    const { name, description, image, slug, isEnabled, sortOrder, parentId } = req.body;
     const data = {};
 
     if (name !== undefined) {
@@ -111,6 +112,10 @@ export async function updateCategory(req, res) {
 
     if (description !== undefined) {
         data.description = description?.trim() ?? '';
+    }
+
+    if (image !== undefined) {
+        data.image = typeof image === 'string' ? image.trim() : '';
     }
 
     if (isEnabled !== undefined) {

@@ -111,39 +111,39 @@ export default function StoreInfoAdmin() {
   };
 
   return (
-    <div className="space-y-6 pb-12 max-w-4xl">
+    <div className="space-y-5 pb-12 max-w-4xl">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          Información Institucional
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-teal-700 block">
+          Configuración del Sitio
+        </span>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
+          Datos Institucionales
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Actualizá los datos comerciales, dirección técnica, horarios y canales de contacto de UALab.
-        </p>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 sm:p-10 space-y-6"
+        className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-4 sm:p-6 space-y-5"
       >
         {/* Logo del Comercio */}
-        <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
-          <div className="w-20 h-20 rounded-2xl bg-teal-50 border-2 border-dashed border-teal-300 flex items-center justify-center overflow-hidden shrink-0">
+        <div className="flex items-center gap-4 pb-5 border-b border-slate-100">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-teal-50 border-2 border-dashed border-teal-300 flex items-center justify-center overflow-hidden shrink-0">
             {logoPreview ? (
               <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
             ) : (
-              <FlaskConical className="w-8 h-8 text-teal-600" />
+              <FlaskConical className="w-7 h-7 sm:w-8 sm:h-8 text-teal-600" />
             )}
           </div>
-          <div className="space-y-2 text-center sm:text-left">
+          <div className="space-y-1.5 min-w-0">
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
               Logo Institucional
             </span>
-            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition cursor-pointer">
-              <Upload className="w-4 h-4 text-slate-500" />
+            <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition cursor-pointer">
+              <Upload className="w-3.5 h-3.5 text-slate-500" />
               <span>Seleccionar Imagen</span>
               <input type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
             </label>
-            <p className="text-[11px] text-slate-400">Formatos recomendados: PNG o JPG transparente</p>
+            <p className="text-[11px] text-slate-400">PNG o JPG recomendado</p>
           </div>
         </div>
 
@@ -319,7 +319,7 @@ export default function StoreInfoAdmin() {
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-900/10 transition disabled:opacity-50 cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm transition disabled:opacity-50 cursor-pointer"
           >
             {submitting ? (
               <>

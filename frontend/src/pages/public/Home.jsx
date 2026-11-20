@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useStoreInfo } from '../../context/StoreInfoContext';
 import ProductCard from '../../components/products/ProductCard';
+import BlackFridayCard from '../../components/products/BlackFridayCard';
 import InquiryModal from '../../components/inquiries/InquiryModal';
 import LiveSearchDropdown from '../../components/common/LiveSearchDropdown';
 import {
@@ -14,31 +15,10 @@ import {
   FileCheck,
   ChevronRight,
   ArrowUpRight,
+  Zap,
+  TrendingUp,
+  FlaskConical,
 } from 'lucide-react';
-
-// Mapeo de fotos de laboratorio/producto de alta calidad para cada categoría principal
-const CATEGORY_VISUALS = {
-  'equipos-de-laboratorio': {
-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80',
-    tagline: 'Centrífugas, agitadores y balanzas de precisión',
-    skuSample: 'ISO 17025',
-  },
-  'manejo-de-liquidos': {
-    image: 'https://images.unsplash.com/photo-1579165466791-788226ab77b6?auto=format&fit=crop&w=600&q=80',
-    tagline: 'Micropipetas monocanal, multicanal y dispensadores',
-    skuSample: 'ISO 8655',
-  },
-  'consumibles-y-descartables': {
-    image: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=600&q=80',
-    tagline: 'Tips con filtro, tubos Falcon, crioviales y descartables',
-    skuSample: 'DNase/RNase Free',
-  },
-  'insumos-farmaceuticos-y-vidrieria': {
-    image: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&w=600&q=80',
-    tagline: 'Vidrio borosilicato 3.3, cápsulas, frascos y morteros',
-    skuSample: 'ANMAT / USP',
-  },
-};
 
 export default function Home() {
   const { storeInfo } = useStoreInfo();
@@ -46,17 +26,34 @@ export default function Home() {
   const [heroSearch, setHeroSearch] = useState('');
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [newProducts, setNewProducts] = useState([]);
+  const [blackFridayProducts, setBlackFridayProducts] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProductForInquiry, setSelectedProductForInquiry] = useState(null);
+  const [countdown, setCountdown] = useState({ days: 2, hours: 14, minutes: 35, seconds: 50 });
+
+  useEffect(() => {
+    const target = Date.now() + ((2 * 24 + 14) * 3600 + 35 * 60 + 50) * 1000;
+    const timer = setInterval(() => {
+      const diff = Math.max(0, target - Date.now());
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      setCountdown({ days, hours, minutes, seconds });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     async function loadHomeData() {
       try {
-        const [featuredRes, newRes, categoriesRes] = await Promise.allSettled([
+        const [featuredRes, newRes, categoriesRes, publicRes] = await Promise.allSettled([
           api.get('/api/products/featured'),
           api.get('/api/products/new'),
           api.get('/api/categories/public'),
+          api.get('/api/products/public'),
         ]);
 
         if (featuredRes.status === 'fulfilled' && Array.isArray(featuredRes.value)) {
@@ -67,6 +64,20 @@ export default function Home() {
         }
         if (categoriesRes.status === 'fulfilled' && Array.isArray(categoriesRes.value)) {
           setCategories(categoriesRes.value);
+        }
+        if (publicRes.status === 'fulfilled' && Array.isArray(publicRes.value)) {
+          const allPublic = publicRes.value;
+          const discounted = allPublic
+            .filter((p) => p.discount && Number(p.discount.value) > 0)
+            .slice(0, 8);
+          setBlackFridayProducts(discounted);
+
+          const nonDiscounted = allPublic.filter(
+            (p) => !discounted.some((d) => d.id === p.id)
+          );
+          setBestSellers(
+            (nonDiscounted.length >= 4 ? nonDiscounted : allPublic).slice(0, 4)
+          );
         }
       } catch (err) {
         console.error('Error al cargar datos del Home', err);
@@ -87,10 +98,10 @@ export default function Home() {
   };
 
   return (
-    <div className="space-y-12 lg:space-y-16 pb-16 bg-slate-50/50">
+    <div className="space-y-8 sm:space-y-12 lg:space-y-16 pb-16 bg-slate-50/50">
       {/* Banner Principal Sobrio y Profesional con HP-banner_v2 */}
       <section className="relative w-full bg-slate-900 border-b border-slate-200">
-        <div className="relative min-h-[360px] sm:min-h-[440px] lg:min-h-[480px] flex items-center">
+        <div className="relative min-h-[260px] sm:min-h-[420px] lg:min-h-[460px] flex items-center">
           {/* Imagen de fondo del banner con overflow-hidden para no salirse */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <img
@@ -103,35 +114,35 @@ export default function Home() {
           </div>
 
           {/* Contenido sobre el banner */}
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 w-full z-20">
-            <div className="max-w-2xl space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/20 text-teal-300 text-xs font-semibold tracking-wide">
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 w-full z-20">
+            <div className="max-w-2xl space-y-4 sm:space-y-6">
+              <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/20 text-teal-300 text-xs font-semibold tracking-wide">
                 <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                <span className="uppercase tracking-wider">Trazabilidad y Control de Calidad · Normas ISO / ANMAT</span>
+                <span className="uppercase tracking-wider">Normas ISO / ANMAT</span>
               </div>
 
-              <div className="space-y-3">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+              <div className="space-y-2 sm:space-y-3">
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
                   Precisión analítica para su{' '}
                   <span className="text-teal-400">laboratorio.</span>
                 </h1>
-                <p className="text-sm sm:text-base text-slate-200 font-normal leading-relaxed max-w-xl">
-                  Provisión de instrumental, reactivos P.A. y consumibles estériles con certificación de lote. Optimizamos la exactitud técnica y la continuidad de sus operaciones.
+                <p className="text-xs sm:text-base text-slate-200 font-normal leading-relaxed max-w-xl">
+                  Instrumental, reactivos y consumibles certificados.
                 </p>
               </div>
 
               {/* Buscador reactivo en vivo sobre el banner */}
-              <div className="relative z-30 bg-white/95 p-1.5 sm:p-2 rounded-2xl shadow-2xl max-w-xl border border-slate-200/60">
+              <div className="relative z-30 bg-white/95 p-1 sm:p-2 rounded-xl sm:rounded-2xl shadow-2xl max-w-xl border border-slate-200/60">
                 <LiveSearchDropdown
-                  placeholder="Buscar equipo, reactivo, fórmula o código SKU..."
-                  inputClassName="w-full pl-10 pr-20 py-2.5 rounded-xl bg-transparent text-slate-800 placeholder:text-slate-400 text-xs sm:text-sm focus:outline-hidden"
+                  placeholder="Buscar equipo, reactivo o SKU..."
+                  inputClassName="w-full pl-9 sm:pl-10 pr-20 py-2 sm:py-2.5 rounded-xl bg-transparent text-slate-800 placeholder:text-slate-400 text-xs sm:text-sm focus:outline-hidden"
                   buttonText="Buscar"
-                  buttonClassName="px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs sm:text-sm transition cursor-pointer shrink-0"
+                  buttonClassName="px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs sm:text-sm transition cursor-pointer shrink-0"
                 />
               </div>
 
-              {/* Accesos Rápidos Sobrios */}
-              <div className="flex flex-wrap items-center gap-2 text-xs pt-1">
+              {/* Accesos Rápidos Sobrios (ocultos en mobile para priorizar buscador y contenido) */}
+              <div className="hidden sm:flex flex-wrap items-center gap-2 text-xs pt-1">
                 <span className="text-slate-300 font-medium">Líneas directas:</span>
                 <Link
                   to="/catalogo?q=Micropipeta"
@@ -163,145 +174,212 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Franja de Respaldo Técnico y Garantías (Estilo OneLab) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 relative z-0">
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-md divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="p-5 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 text-teal-700 flex items-center justify-center shrink-0 border border-slate-200">
-              <FileCheck className="w-5 h-5 text-teal-600" />
+      {/* Franja de Respaldo Técnico y Garantías (compacta 2x2 en mobile) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 sm:-mt-8 relative z-0">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-md grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-slate-100">
+          <div className="p-3 sm:p-5 flex items-center gap-2.5 sm:gap-4">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-slate-50 text-teal-700 flex items-center justify-center shrink-0 border border-slate-200">
+              <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 text-xs sm:text-sm">Certificación y Normas</h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">Trazabilidad ANMAT e ISO 8655</p>
+              <h4 className="font-bold text-slate-900 text-[11px] sm:text-sm leading-tight">Certificación ISO</h4>
+              <p className="hidden sm:block text-[11px] text-slate-500 mt-0.5">Trazabilidad ANMAT e ISO 8655</p>
             </div>
           </div>
 
-          <div className="p-5 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 text-teal-700 flex items-center justify-center shrink-0 border border-slate-200">
-              <Truck className="w-5 h-5 text-teal-600" />
+          <div className="p-3 sm:p-5 flex items-center gap-2.5 sm:gap-4">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-slate-50 text-teal-700 flex items-center justify-center shrink-0 border border-slate-200">
+              <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 text-xs sm:text-sm">Despachos Especializados</h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">Embalaje reforzado para vidrio y óptica</p>
+              <h4 className="font-bold text-slate-900 text-[11px] sm:text-sm leading-tight">Envíos Seguros</h4>
+              <p className="hidden sm:block text-[11px] text-slate-500 mt-0.5">Embalaje reforzado para vidrio y óptica</p>
             </div>
           </div>
 
-          <div className="p-5 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 text-teal-700 flex items-center justify-center shrink-0 border border-slate-200">
-              <Award className="w-5 h-5 text-teal-600" />
+          <div className="p-3 sm:p-5 flex items-center gap-2.5 sm:gap-4">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-slate-50 text-teal-700 flex items-center justify-center shrink-0 border border-slate-200">
+              <Award className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 text-xs sm:text-sm">Instrumental Homologado</h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">Marcas líderes con soporte oficial</p>
+              <h4 className="font-bold text-slate-900 text-[11px] sm:text-sm leading-tight">Marcas Líderes</h4>
+              <p className="hidden sm:block text-[11px] text-slate-500 mt-0.5">Soporte oficial homologado</p>
             </div>
           </div>
 
-          <div className="p-5 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 text-teal-700 flex items-center justify-center shrink-0 border border-slate-200">
-              <ShieldCheck className="w-5 h-5 text-teal-600" />
+          <div className="p-3 sm:p-5 flex items-center gap-2.5 sm:gap-4">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-slate-50 text-teal-700 flex items-center justify-center shrink-0 border border-slate-200">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 text-xs sm:text-sm">Garantía y Asistencia</h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">Asesoramiento técnico continuo</p>
+              <h4 className="font-bold text-slate-900 text-[11px] sm:text-sm leading-tight">Garantía Oficial</h4>
+              <p className="hidden sm:block text-[11px] text-slate-500 mt-0.5">Asesoramiento técnico continuo</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Grid de Categorías con Fotografías Reales (Estilo E-Commerce Científico OneLab) */}
+      {/* Bloques Directos por Categoría */}
       {categories.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="flex items-end justify-between mb-6 pb-3 border-b border-slate-200">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
+          <div className="flex items-end justify-between mb-5 pb-3 border-b border-slate-200">
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-teal-700 block mb-1">
-                Catálogo Especializado
+              <span className="text-[11px] font-bold uppercase tracking-wider text-teal-700 block mb-0.5">
+                Explorar por Rubro
               </span>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                Principales Líneas de Productos
+                Elegí una Categoría
               </h2>
             </div>
             <Link
               to="/catalogo"
-              className="text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 inline-flex items-center gap-1 group"
+              className="text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 inline-flex items-center gap-1 shrink-0 group"
             >
-              <span>Ver todas las categorías</span>
+              <span>Ver todo</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+            {categories.map((cat) => {
+              const imgUrl = cat.image
+                ? cat.image.startsWith('http') || cat.image.startsWith('/')
+                  ? cat.image
+                  : `/uploads/${cat.image}`
+                : null;
+
+              return (
+                <Link
+                  key={cat.id}
+                  to={`/catalogo?categoria=${cat.id}`}
+                  className="group relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 hover:border-teal-500 shadow-xs hover:shadow-lg transition-all duration-300 aspect-4/3 sm:aspect-16/10 flex items-end"
+                >
+                  {imgUrl ? (
+                    <img
+                      src={imgUrl}
+                      alt={cat.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-slate-600">
+                      <FlaskConical className="w-10 h-10 stroke-1" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
+                  <div className="relative z-10 p-3.5 sm:p-5 w-full flex items-end justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-teal-300 transition leading-snug">
+                        {cat.name}
+                      </h3>
+                    </div>
+                    <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/15 group-hover:bg-teal-600 text-white flex items-center justify-center shrink-0 transition">
+                      <ArrowUpRight className="w-4 h-4" />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Sección Black Friday: 8 Productos en Grilla 4x2 */}
+      {blackFridayProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-slate-100/80 rounded-2xl py-8 sm:py-10 px-5 sm:px-8 border border-slate-200/90">
+            {/* Header de la sección */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-slate-200">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  <span>Black Friday</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                  Ofertas Exclusivas de Laboratorio
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 max-w-xl">
+                  Descuentos por tiempo limitado en instrumental analítico, equipamiento e insumos certificados.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between lg:justify-end gap-4 sm:gap-6">
+                {/* Contador regresivo minimalista */}
+                <div className="flex items-center gap-2">
+                  {[
+                    { label: 'Días', value: countdown.days },
+                    { label: 'Hrs', value: countdown.hours },
+                    { label: 'Min', value: countdown.minutes },
+                    { label: 'Seg', value: countdown.seconds },
+                  ].map((unit) => (
+                    <div
+                      key={unit.label}
+                      className="bg-white border border-slate-200 rounded-xl px-2.5 sm:px-3 py-2 min-w-[48px] sm:min-w-[54px] text-center shadow-2xs"
+                    >
+                      <span className="text-base sm:text-lg font-extrabold text-slate-900 tabular-nums block leading-none">
+                        {String(unit.value).padStart(2, '0')}
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-500 font-semibold block mt-1">
+                        {unit.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  to="/catalogo"
+                  className="text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 inline-flex items-center gap-1.5 whitespace-nowrap group transition"
+                >
+                  <span>Ver todo el catálogo</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Grilla 4x2 (8 productos) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+              {blackFridayProducts.map((prod) => (
+                <BlackFridayCard
+                  key={prod.id}
+                  product={prod}
+                  onInquire={(p) => setSelectedProductForInquiry(p)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Productos Más Vendidos */}
+      {bestSellers.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-6 pb-3 border-b border-slate-200">
+            <div>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-teal-700 mb-1">
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>Elegidos por Laboratorios</span>
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Productos Más Vendidos
+              </h2>
+            </div>
+            <Link
+              to="/catalogo"
+              className="text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 inline-flex items-center gap-1 shrink-0 group"
+            >
+              <span>Ver todos</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((cat) => {
-              const visual = CATEGORY_VISUALS[cat.slug] || {
-                image: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=600&q=80',
-                tagline: 'Equipamiento e insumos de laboratorio',
-                skuSample: 'Calidad Homologada',
-              };
-
-              return (
-                <div
-                  key={cat.id}
-                  className="bg-white rounded-2xl border border-slate-200 hover:border-teal-500 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col group"
-                >
-                  {/* Foto técnica del rubro */}
-                  <div className="relative h-44 overflow-hidden bg-slate-100 border-b border-slate-100">
-                    <img
-                      src={visual.image}
-                      alt={cat.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
-                    <span className="absolute top-3 right-3 text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/90 text-slate-800 backdrop-blur-xs shadow-xs">
-                      {visual.skuSample}
-                    </span>
-                    <div className="absolute bottom-3 left-4 right-4">
-                      <Link
-                        to={`/catalogo?categoria=${cat.id}`}
-                        className="font-black text-base text-white group-hover:text-teal-300 transition block leading-snug drop-shadow-xs"
-                      >
-                        {cat.name}
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Cuerpo de la tarjeta con subcategorías y enlace */}
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed font-normal">
-                      {cat.description || visual.tagline}
-                    </p>
-
-                    {/* Subcategorías directas con badges */}
-                    {Array.isArray(cat.children) && cat.children.length > 0 && (
-                      <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                        <span className="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">
-                          Subcategorías:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {cat.children.map((sub) => (
-                            <Link
-                              key={sub.id}
-                              to={`/catalogo?categoria=${sub.id}`}
-                              className="text-[11px] font-medium px-2 py-1 rounded-md bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-teal-700 border border-slate-200/80 transition"
-                            >
-                              {sub.name}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="pt-2">
-                      <Link
-                        to={`/catalogo?categoria=${cat.id}`}
-                        className="inline-flex items-center justify-between w-full py-2 px-3 rounded-xl bg-slate-50 group-hover:bg-teal-600 text-slate-700 group-hover:text-white text-xs font-bold transition"
-                      >
-                        <span>Ver productos</span>
-                        <ArrowUpRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {bestSellers.map((prod) => (
+              <ProductCard
+                key={prod.id}
+                product={prod}
+                onInquire={(p) => setSelectedProductForInquiry(p)}
+              />
+            ))}
           </div>
         </section>
       )}

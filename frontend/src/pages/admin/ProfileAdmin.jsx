@@ -119,29 +119,31 @@ export default function ProfileAdmin() {
   };
 
   return (
-    <div className="space-y-8 pb-12 max-w-4xl">
+    <div className="space-y-5 pb-12 max-w-4xl">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-teal-700 block">
+          Cuenta de Administrador
+        </span>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
           Mi Perfil & Seguridad
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Actualizá tus datos de administrador responsable y administrá tu clave de acceso a UALab.
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 gap-5">
         {/* Formulario Datos Personales */}
         <form
           onSubmit={handleProfileSubmit}
-          className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 sm:p-8 space-y-6"
+          className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-4 sm:p-6 space-y-5"
         >
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
-              <User className="w-5 h-5" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+              <User className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Datos Personales y Profesionales</h2>
-              <p className="text-xs text-slate-400">Información asociada a tu cuenta ({user?.email})</p>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                Datos Personales y Profesionales
+              </h2>
+              <p className="text-xs text-slate-400 truncate">{user?.email}</p>
             </div>
           </div>
 
@@ -205,7 +207,7 @@ export default function ProfileAdmin() {
             <button
               type="submit"
               disabled={savingProfile}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-900/10 transition disabled:opacity-50 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm transition disabled:opacity-50 cursor-pointer"
             >
               {savingProfile ? (
                 <>
@@ -225,15 +227,15 @@ export default function ProfileAdmin() {
         {/* Formulario Cambio de Contraseña */}
         <form
           onSubmit={handlePasswordSubmit}
-          className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 sm:p-8 space-y-6"
+          className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-4 sm:p-6 space-y-5"
         >
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <KeyRound className="w-5 h-5" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <KeyRound className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Seguridad & Contraseña</h2>
-              <p className="text-xs text-slate-400">Actualizá tu clave para mantener tu cuenta protegida</p>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">Seguridad & Contraseña</h2>
+              <p className="text-xs text-slate-400">Actualizá tu clave de acceso</p>
             </div>
           </div>
 
@@ -290,7 +292,7 @@ export default function ProfileAdmin() {
             <button
               type="submit"
               disabled={changingPassword}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-teal-600 text-white font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-teal-600 text-white font-bold text-xs shadow-sm transition disabled:opacity-50 cursor-pointer"
             >
               {changingPassword ? (
                 <>

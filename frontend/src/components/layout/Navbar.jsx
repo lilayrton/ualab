@@ -3,23 +3,21 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useStoreInfo } from '../../context/StoreInfoContext';
 import { useToast } from '../../context/ToastContext';
+import LiveSearchDropdown from '../common/LiveSearchDropdown';
 import {
   Menu,
   X,
   Shield,
   LogOut,
   ChevronDown,
-  Search,
   Phone,
   Clock,
   ShieldCheck,
-  User,
 } from 'lucide-react';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [quickSearch, setQuickSearch] = useState('');
   const { user, isAdmin, logout } = useAuth();
   const { storeInfo } = useStoreInfo();
   const { addToast } = useToast();
@@ -36,17 +34,6 @@ export default function Navbar() {
     }
   };
 
-  const handleQuickSearch = (e) => {
-    e.preventDefault();
-    if (quickSearch.trim()) {
-      navigate(`/catalogo?q=${encodeURIComponent(quickSearch.trim())}`);
-      setQuickSearch('');
-      setMobileMenuOpen(false);
-    } else {
-      navigate('/catalogo');
-    }
-  };
-
   const navItemClass = ({ isActive }) =>
     `px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
       isActive
@@ -59,8 +46,8 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
-      {/* Barra Superior Institucional (Estilo OneLab) */}
-      <div className="bg-slate-900 text-slate-300 text-[11px] py-1.5 border-b border-slate-800">
+      {/* Barra Superior Institucional (oculta en mobile para reducir peso visual) */}
+      <div className="hidden sm:block bg-slate-900 text-slate-300 text-[11px] py-1.5 border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 font-medium">
             <ShieldCheck className="w-3.5 h-3.5 text-teal-400 shrink-0" />
@@ -87,7 +74,7 @@ export default function Navbar() {
 
       {/* Barra Principal de Navegación */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4 lg:gap-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-4 lg:gap-8">
           {/* Logo Limpio: solo el logo gráfico sin textos extra */}
           <Link to="/" className="shrink-0 flex items-center group py-2" title="UALab - Farmacia & Equipamiento">
             <img
@@ -113,28 +100,17 @@ export default function Navbar() {
             </NavLink>
           </nav>
 
-          {/* Lado Derecho: Buscador Compacto + Acceso de Usuario */}
+          {/* Lado Derecho: Buscador en Tiempo Real + Acceso de Usuario */}
           <div className="flex items-center gap-3 sm:gap-4 ml-auto">
-            {/* Buscador Técnico ubicado a la derecha */}
-            <form
-              onSubmit={handleQuickSearch}
-              className="hidden md:flex items-center relative w-56 lg:w-72"
-            >
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                value={quickSearch}
-                onChange={(e) => setQuickSearch(e.target.value)}
+            {/* Buscador en vivo ubicado a la derecha */}
+            <div className="hidden md:block w-64 lg:w-80">
+              <LiveSearchDropdown
                 placeholder="Buscar equipo o SKU..."
-                className="w-full pl-9 pr-16 py-2 rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:border-slate-800 text-xs text-slate-900 placeholder:text-slate-400 transition focus:outline-hidden"
+                inputClassName="w-full pl-9 pr-14 py-2 rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:border-slate-800 text-xs text-slate-900 placeholder:text-slate-400 transition focus:outline-hidden"
+                buttonText="Ir"
+                buttonClassName="ml-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold uppercase transition cursor-pointer shrink-0"
               />
-              <button
-                type="submit"
-                className="absolute right-1 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold uppercase transition cursor-pointer"
-              >
-                Ir
-              </button>
-            </form>
+            </div>
 
             {/* Menú de Usuario Compacto */}
             {user ? (
@@ -228,22 +204,13 @@ export default function Navbar() {
       {/* Menú Mobile */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-3 shadow-lg">
-          <form onSubmit={handleQuickSearch} className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              value={quickSearch}
-              onChange={(e) => setQuickSearch(e.target.value)}
-              placeholder="Buscar insumo o código SKU..."
-              className="w-full pl-10 pr-20 py-2 rounded-lg border border-slate-300 text-xs focus:outline-hidden"
-            />
-            <button
-              type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 rounded bg-slate-900 text-white text-xs font-bold"
-            >
-              Buscar
-            </button>
-          </form>
+          <LiveSearchDropdown
+            placeholder="Buscar insumo o código SKU..."
+            inputClassName="w-full pl-10 pr-16 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-slate-800"
+            buttonText="Buscar"
+            buttonClassName="ml-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition cursor-pointer shrink-0"
+            onNavigate={() => setMobileMenuOpen(false)}
+          />
 
           <NavLink
             to="/"

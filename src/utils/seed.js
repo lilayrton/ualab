@@ -120,6 +120,7 @@ async function seed() {
       name: 'Equipos de Laboratorio',
       slug: 'equipos-de-laboratorio',
       description: 'Instrumental analítico, agitadores, centrífugas, microscopios y balanzas de precisión.',
+      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80',
       sortOrder: 1,
     },
     {
@@ -127,6 +128,7 @@ async function seed() {
       name: 'Manejo de Líquidos',
       slug: 'manejo-de-liquidos',
       description: 'Micropipetas automáticas, buretas digitales, dispensadores de frasco y pipeteadores.',
+      image: 'https://images.unsplash.com/photo-1579165466791-788226ab77b6?auto=format&fit=crop&w=600&q=80',
       sortOrder: 2,
     },
     {
@@ -134,6 +136,7 @@ async function seed() {
       name: 'Consumibles y Descartables',
       slug: 'consumibles-y-descartables',
       description: 'Material plástico estéril, placas de Petri, tubos Falcon, crioviales, tips y protección.',
+      image: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=600&q=80',
       sortOrder: 3,
     },
     {
@@ -141,6 +144,7 @@ async function seed() {
       name: 'Insumos Farmacéuticos y Vidriería',
       slug: 'insumos-farmaceuticos-y-vidrieria',
       description: 'Material volumétrico en vidrio borosilicato, reactivos farmacopea, morteros y envases.',
+      image: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&w=600&q=80',
       sortOrder: 4,
     },
   ];
@@ -151,6 +155,7 @@ async function seed() {
       name: pc.name,
       slug: pc.slug,
       description: pc.description,
+      image: pc.image,
       isEnabled: true,
       sortOrder: pc.sortOrder,
       parentId: null,
@@ -295,6 +300,7 @@ async function seed() {
       images: ['https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=900&q=80'],
       isFeatured: false,
       newUntil: null,
+      discountId: disc1.id,
     },
     {
       name: 'Centrífuga Clínica Digital DLab DM0412 para 8 Tubos de 15 ml',
@@ -320,6 +326,7 @@ async function seed() {
       images: ['https://images.unsplash.com/photo-1581093450021-4a7360e9a6b5?auto=format&fit=crop&w=900&q=80'],
       isFeatured: false,
       newUntil: futureDate,
+      discountId: disc2.id,
     },
     {
       name: 'Baño Termostático Digital de Acero Inoxidable 6 Litros HH-S2',
@@ -332,6 +339,7 @@ async function seed() {
       images: ['https://images.unsplash.com/photo-1563213126-a4273aed2016?auto=format&fit=crop&w=900&q=80'],
       isFeatured: false,
       newUntil: null,
+      discountId: disc1.id,
     },
     {
       name: 'Espectrofotómetro UV-Visible Digital 190-1100 nm Metash UV-5100',
@@ -356,6 +364,7 @@ async function seed() {
       images: ['https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?auto=format&fit=crop&w=900&q=80'],
       isFeatured: false,
       newUntil: null,
+      discountId: disc2.id,
     },
     {
       name: 'Dispensador para Boca de Frasco DLab DispensMate-Pro',
@@ -471,6 +480,7 @@ async function seed() {
       images: ['https://images.unsplash.com/photo-1532187643603-ba119ca4109e?auto=format&fit=crop&w=900&q=80'],
       isFeatured: true,
       newUntil: null,
+      discountId: disc1.id,
     },
     {
       name: 'Matraz Aforado Clase A Vidrio Borosilicato 3.3 con Tapón de PTFE Certificado',

@@ -11,6 +11,7 @@ export default function LiveSearchDropdown({
   buttonClassName = '',
   showButton = true,
   onSelectProduct = null,
+  onNavigate = null,
 }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -57,8 +58,9 @@ export default function LiveSearchDropdown({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsOpen(false);
+    onNavigate?.();
     if (query.trim()) {
-      setIsOpen(false);
       navigate(`/catalogo?q=${encodeURIComponent(query.trim())}`);
     } else {
       navigate('/catalogo');
@@ -68,6 +70,7 @@ export default function LiveSearchDropdown({
   const handleSelect = (productId) => {
     setIsOpen(false);
     setQuery('');
+    onNavigate?.();
     if (onSelectProduct) {
       onSelectProduct(productId);
     } else {

@@ -17,6 +17,7 @@ export function serializeCategory(category) {
         id: stringId(raw),
         name: raw.name,
         description: raw.description ?? '',
+        image: raw.image || '',
         slug: raw.slug,
         isEnabled: raw.isEnabled,
         sortOrder: raw.sortOrder ?? 0,

@@ -12,6 +12,9 @@ import {
   Loader2,
   FlaskConical,
   AlertTriangle,
+  ChevronDown,
+  Check,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 export default function ProductsAdmin() {
@@ -20,6 +23,8 @@ export default function ProductsAdmin() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
 
   // Modales
   const [modalOpen, setModalOpen] = useState(false);
@@ -189,6 +194,10 @@ export default function ProductsAdmin() {
     }
   };
 
+  const activeCount = products.filter((p) => p.isEnabled).length;
+  const pausedCount = products.filter((p) => !p.isEnabled).length;
+  const lowStockCount = products.filter((p) => (p.stock ?? 0) <= 5).length;
+
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
       searchTerm === '' ||
@@ -200,33 +209,112 @@ export default function ProductsAdmin() {
       (Array.isArray(p.categories) &&
         p.categories.some((c) => String(c.id) === selectedCategoryFilter));
 
-    return matchesSearch && matchesCategory;
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && p.isEnabled) ||
+      (statusFilter === 'paused' && !p.isEnabled) ||
+      (statusFilter === 'lowStock' && (p.stock ?? 0) <= 5);
+
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-5 pb-12">
       {/* Cabecera */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            ABM de Insumos y Equipamiento
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-teal-700 block">
+            Catálogo de Insumos
+          </span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
+            Inventario y Precios
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Administrá el vademécum técnico, precios, stock y estado de disponibilidad ({products.length} ítems).
-          </p>
         </div>
 
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/15 transition cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm transition cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Nuevo Insumo / Equipo</span>
+          <span className="sm:hidden">Nuevo</span>
+          <span className="hidden sm:inline">Nuevo Insumo / Equipo</span>
+        </button>
+      </div>
+
+      {/* Resumen Operativo Interactivo (tocar para filtrar) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <button
+          type="button"
+          onClick={() => setStatusFilter('all')}
+          className={`text-left p-3 sm:p-3.5 rounded-xl border transition cursor-pointer ${
+            statusFilter === 'all'
+              ? 'bg-white border-slate-900 ring-1 ring-slate-900 shadow-2xs'
+              : 'bg-white/80 border-slate-200 hover:border-slate-300'
+          }`}
+        >
+          <span className="text-[11px] font-semibold text-slate-500 block">Total catálogo</span>
+          <span className="text-lg sm:text-xl font-extrabold text-slate-900 tabular-nums mt-0.5 block">
+            {products.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter((prev) => (prev === 'active' ? 'all' : 'active'))}
+          className={`text-left p-3 sm:p-3.5 rounded-xl border transition cursor-pointer ${
+            statusFilter === 'active'
+              ? 'bg-white border-emerald-600 ring-1 ring-emerald-600 shadow-2xs'
+              : 'bg-white/80 border-slate-200 hover:border-slate-300'
+          }`}
+        >
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            Activos
+          </span>
+          <span className="text-lg sm:text-xl font-extrabold text-emerald-700 tabular-nums mt-0.5 block">
+            {activeCount}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter((prev) => (prev === 'paused' ? 'all' : 'paused'))}
+          className={`text-left p-3 sm:p-3.5 rounded-xl border transition cursor-pointer ${
+            statusFilter === 'paused'
+              ? 'bg-white border-rose-500 ring-1 ring-rose-500 shadow-2xs'
+              : 'bg-white/80 border-slate-200 hover:border-slate-300'
+          }`}
+        >
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
+            Pausados
+          </span>
+          <span className="text-lg sm:text-xl font-extrabold text-rose-700 tabular-nums mt-0.5 block">
+            {pausedCount}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter((prev) => (prev === 'lowStock' ? 'all' : 'lowStock'))}
+          className={`text-left p-3 sm:p-3.5 rounded-xl border transition cursor-pointer ${
+            statusFilter === 'lowStock'
+              ? 'bg-white border-amber-500 ring-1 ring-amber-500 shadow-2xs'
+              : 'bg-white/80 border-slate-200 hover:border-slate-300'
+          }`}
+        >
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            Stock bajo (≤5)
+          </span>
+          <span className="text-lg sm:text-xl font-extrabold text-amber-700 tabular-nums mt-0.5 block">
+            {lowStockCount}
+          </span>
         </button>
       </div>
 
       {/* Filtros Rápidos */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -234,114 +322,174 @@ export default function ProductsAdmin() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Filtrar por nombre o código SKU..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-teal-600"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-teal-600"
           />
         </div>
 
-        <div className="w-full sm:w-auto flex items-center gap-3">
-          <select
-            value={selectedCategoryFilter}
-            onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-            className="w-full sm:w-auto px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:outline-hidden"
+        {/* Selector desplegable personalizado en lista */}
+        <div className="relative w-full sm:w-64">
+          <button
+            type="button"
+            onClick={() => setCategoryMenuOpen((prev) => !prev)}
+            className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white text-xs font-semibold text-slate-700 transition cursor-pointer"
           >
-            <option value="">Todas las especialidades</option>
-            {categories.map((c) => (
-              <option key={c.id} value={String(c.id)}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            <span className="flex items-center gap-2 truncate">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+              <span className="truncate">
+                {selectedCategoryFilter === ''
+                  ? 'Todas las especialidades'
+                  : categories.find((c) => String(c.id) === selectedCategoryFilter)?.name ||
+                    'Especialidad'}
+              </span>
+            </span>
+            <ChevronDown
+              className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${
+                categoryMenuOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+
+          {categoryMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-20"
+                onClick={() => setCategoryMenuOpen(false)}
+              />
+              <div className="absolute left-0 right-0 mt-1.5 bg-white rounded-xl border border-slate-200 shadow-xl py-1.5 z-30 max-h-64 overflow-y-auto divide-y divide-slate-100/80">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategoryFilter('');
+                    setCategoryMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-xs text-left transition cursor-pointer ${
+                    selectedCategoryFilter === ''
+                      ? 'bg-teal-50/80 text-teal-800 font-bold'
+                      : 'text-slate-700 hover:bg-slate-50 font-medium'
+                  }`}
+                >
+                  <span>Todas las especialidades</span>
+                  {selectedCategoryFilter === '' && (
+                    <Check className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                  )}
+                </button>
+                {categories.map((c) => {
+                  const active = selectedCategoryFilter === String(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategoryFilter(String(c.id));
+                        setCategoryMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 text-xs text-left transition cursor-pointer ${
+                        active
+                          ? 'bg-teal-50/80 text-teal-800 font-bold'
+                          : 'text-slate-700 hover:bg-slate-50 font-medium'
+                      }`}
+                    >
+                      <span className="truncate pr-2">{c.name}</span>
+                      {active && <Check className="w-3.5 h-3.5 text-teal-600 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Tabla */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+      {/* Listado / Tabla */}
+      <div className="md:bg-white md:rounded-2xl md:border md:border-slate-200/80 md:shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center flex flex-col items-center">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center flex flex-col items-center">
             <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
             <span className="text-xs text-slate-500 mt-2">Cargando catálogo...</span>
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/75 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">Insumo / Equipo</th>
-                  <th className="py-3 px-4">SKU</th>
-                  <th className="py-3 px-4">Precio</th>
-                  <th className="py-3 px-4">Stock</th>
-                  <th className="py-3 px-4">Especialidad</th>
-                  <th className="py-3 px-4">Estado</th>
-                  <th className="py-3 px-4 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredProducts.map((p) => {
-                  const firstImg = Array.isArray(p.images) && p.images[0];
-                  const imgUrl = firstImg
-                    ? firstImg.startsWith('http') || firstImg.startsWith('/')
-                      ? firstImg
-                      : `/uploads/${firstImg}`
-                    : null;
-                  const catName =
-                    Array.isArray(p.categories) && p.categories[0]
-                      ? p.categories[0].name
-                      : '-';
+          <>
+            {/* Vista Mobile: Tarjetas individuales separadas */}
+            <div className="md:hidden space-y-3">
+              {filteredProducts.map((p) => {
+                const firstImg = Array.isArray(p.images) && p.images[0];
+                const imgUrl = firstImg
+                  ? firstImg.startsWith('http') || firstImg.startsWith('/')
+                    ? firstImg
+                    : `/uploads/${firstImg}`
+                  : null;
+                const catName =
+                  Array.isArray(p.categories) && p.categories[0]
+                    ? p.categories[0].name
+                    : '-';
 
-                  return (
-                    <tr key={p.id} className="hover:bg-slate-50/50 transition">
-                      <td className="py-3 px-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
-                          {imgUrl ? (
-                            <img src={imgUrl} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-teal-600">
-                              <FlaskConical className="w-5 h-5" />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <span className="font-bold text-slate-800 block line-clamp-1 max-w-xs">
+                return (
+                  <div
+                    key={p.id}
+                    className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-4 space-y-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                        {imgUrl ? (
+                          <img src={imgUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-teal-600">
+                            <FlaskConical className="w-5 h-5" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-bold text-sm text-slate-900 leading-snug line-clamp-2">
                             {p.name}
                           </span>
+                          <button
+                            onClick={() => handleToggleActive(p)}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 cursor-pointer ${
+                              p.isEnabled
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            {p.isEnabled ? <Power className="w-3 h-3" /> : <PowerOff className="w-3 h-3" />}
+                            <span>{p.isEnabled ? 'Activo' : 'Pausado'}</span>
+                          </button>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-slate-500">
+                          <span className="font-mono font-semibold text-slate-600">{p.sku}</span>
+                          <span>·</span>
+                          <span className="truncate">{catName}</span>
                           {p.isFeatured && (
-                            <span className="text-[10px] text-teal-700 font-bold uppercase">
-                              ★ Destacado
-                            </span>
+                            <>
+                              <span>·</span>
+                              <span className="text-teal-700 font-bold uppercase text-[10px]">
+                                ★ Destacado
+                              </span>
+                            </>
                           )}
                         </div>
-                      </td>
-                      <td className="py-3 px-4 font-mono font-semibold text-slate-600">{p.sku}</td>
-                      <td className="py-3 px-4 font-extrabold text-slate-900">
-                        ${Number(p.price).toLocaleString('es-AR')}
-                      </td>
-                      <td className="py-3 px-4 font-medium text-slate-600">{p.stock ?? 0} u.</td>
-                      <td className="py-3 px-4 text-slate-600">{catName}</td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => handleToggleActive(p)}
-                          title="Hacer clic para activar o pausar publicación"
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition cursor-pointer ${
-                            p.isEnabled
-                              ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                              : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
-                          }`}
-                        >
-                          {p.isEnabled ? (
-                            <Power className="w-3 h-3" />
-                          ) : (
-                            <PowerOff className="w-3 h-3" />
-                          )}
-                          <span>{p.isEnabled ? 'Activo' : 'Pausado'}</span>
-                        </button>
-                      </td>
-                      <td className="py-3 px-4 text-right space-x-1">
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <div className="flex items-baseline gap-3 text-xs">
+                        <span className="font-extrabold text-sm text-slate-900 tabular-nums">
+                          ${Number(p.price).toLocaleString('es-AR')}
+                        </span>
+                        <span className="text-slate-500 font-medium">
+                          Stock: <strong className="text-slate-700">{p.stock ?? 0} u.</strong>
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEditModal(p)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-teal-700 hover:bg-slate-100 transition cursor-pointer"
-                          title="Editar"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-700 text-xs font-semibold transition cursor-pointer"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Editar</span>
                         </button>
                         <button
                           onClick={() => setDeleteConfirmProduct(p)}
@@ -350,13 +498,110 @@ export default function ProductsAdmin() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Vista Desktop: Tabla completa */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/75 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Insumo / Equipo</th>
+                    <th className="py-3 px-4">SKU</th>
+                    <th className="py-3 px-4">Precio</th>
+                    <th className="py-3 px-4">Stock</th>
+                    <th className="py-3 px-4">Especialidad</th>
+                    <th className="py-3 px-4">Estado</th>
+                    <th className="py-3 px-4 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {filteredProducts.map((p) => {
+                    const firstImg = Array.isArray(p.images) && p.images[0];
+                    const imgUrl = firstImg
+                      ? firstImg.startsWith('http') || firstImg.startsWith('/')
+                        ? firstImg
+                        : `/uploads/${firstImg}`
+                      : null;
+                    const catName =
+                      Array.isArray(p.categories) && p.categories[0]
+                        ? p.categories[0].name
+                        : '-';
+
+                    return (
+                      <tr key={p.id} className="hover:bg-slate-50/50 transition">
+                        <td className="py-3 px-4 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                            {imgUrl ? (
+                              <img src={imgUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-teal-600">
+                                <FlaskConical className="w-5 h-5" />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-800 block line-clamp-1 max-w-xs">
+                              {p.name}
+                            </span>
+                            {p.isFeatured && (
+                              <span className="text-[10px] text-teal-700 font-bold uppercase">
+                                ★ Destacado
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-semibold text-slate-600">{p.sku}</td>
+                        <td className="py-3 px-4 font-extrabold text-slate-900">
+                          ${Number(p.price).toLocaleString('es-AR')}
+                        </td>
+                        <td className="py-3 px-4 font-medium text-slate-600">{p.stock ?? 0} u.</td>
+                        <td className="py-3 px-4 text-slate-600">{catName}</td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleToggleActive(p)}
+                            title="Hacer clic para activar o pausar publicación"
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition cursor-pointer ${
+                              p.isEnabled
+                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                            }`}
+                          >
+                            {p.isEnabled ? (
+                              <Power className="w-3 h-3" />
+                            ) : (
+                              <PowerOff className="w-3 h-3" />
+                            )}
+                            <span>{p.isEnabled ? 'Activo' : 'Pausado'}</span>
+                          </button>
+                        </td>
+                        <td className="py-3 px-4 text-right space-x-1">
+                          <button
+                            onClick={() => openEditModal(p)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-teal-700 hover:bg-slate-100 transition cursor-pointer"
+                            title="Editar"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirmProduct(p)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <div className="p-12 text-center text-xs text-slate-400">
             No se encontraron publicaciones con los filtros aplicados.
